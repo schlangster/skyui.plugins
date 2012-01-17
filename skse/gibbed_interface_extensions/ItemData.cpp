@@ -28,6 +28,9 @@
 #include "skse/ScaleformMovie.h"
 #include "skse/ScaleformAPI.h"
 #include "skse/SafeWrite.h"
+#include "skse/GameForms.h"
+#include "skse/GameObjects.h"
+#include "skse/GameRTTI.h"
 
 #include "ItemData.h"
 
@@ -62,33 +65,19 @@ struct _Constants
 }
 Constants;
 
-class Form
-{
-public:
-	unsigned char data[1];
-};
-
 class Item
 {
 public:
-	Form			*form;				// 000
+	TESForm			*form;				// 000
 };
 
-class EffectData
+struct EffectItem
 {
-public:
-	unsigned char	unkn_000[0x05F];	// 000
-	int				skillLevel;			// 060
-	unsigned char	unkn_064[0x018];	// 064
-	int				effectType;			// 07C
-		
-};
-
-class UnknEffectData1
-{
-public:
-	unsigned char	unkn_000[0x00B];	// 000
-	EffectData *	unkn_00C;			// 00C
+	float			magnitude;		// 000
+	UInt32			area;			// 004
+	UInt32			duration;		// 008
+	EffectSetting*	mgef;	// 00C
+	//float	cost;  - maybe?
 };
 
 class StandardItemData
@@ -107,7 +96,7 @@ class MagicItemData
 public:
 	unsigned int	vtable;				// 000	
 	unsigned char	unkn_004[0x008];	// 004
-	Form *			form;				// 00C
+	TESForm *		form;				// 00C
 	GFxValue		fxValue;			// 010
 	// ?
 };
@@ -157,40 +146,6 @@ void SetupAddresses1_3_10(void)
 	Constants.FormType_EffectSetting = 0x12;
 }
 
-unsigned char GetFormType(Form *form)
-{
-	UInt32 func = Addresses.GetFormType;
-
-	__asm
-	{
-		mov ecx, form
-		call func
-	}
-}
-
-// Not used for now
-double GetFormWeight(Form *form)
-{
-	UInt32 func = Addresses.GetFormWeight;
-	__asm
-	{
-		push form
-		call func
-		add esp, 4
-	}
-}
-
-// Not used for now
-int GetItemValue(Item *item)
-{
-	UInt32 func = Addresses.GetItemValue;
-	__asm
-	{
-		mov ecx, item
-		call func
-	}
-}
-
 double GetItemDamage(Item *item)
 {
 	UInt32 func = Addresses.GetItemDamage;
@@ -217,38 +172,38 @@ double GetItemArmor(Item *item)
 	}
 }
 
-EffectData * GetCostliestEffect(Form *form)
+EffectSetting * GetCostliestEffect(TESForm *form)
 {
 	UInt32 func1 = Addresses.UnknEffectFunc1;
 
-	UnknEffectData1 * data1 = NULL;
+	EffectItem * effect = NULL;
 
 	__asm
 	{
 		push 0
 		push 5
 		mov ecx, form
-		call func1		// UnknEffectData1
-		mov data1, eax
+		call func1
+		mov effect, eax
 	}
 
-	if (data1 == NULL)
+	if (effect == NULL)
 		return NULL;
 
-	return data1->unkn_00C;
+	return effect->mgef;
 }
 
-int GetPotionType(Item *item)
+int GetPotionType(TESForm *form)
 {
-	EffectData* data = GetCostliestEffect(item->form);
+	EffectSetting* mgef = GetCostliestEffect(form);
 
-	if (data == NULL)
+	if (mgef == NULL)
 		return -1;
 
-	return data->effectType;
+	return mgef->unk38.actorValue;
 }
 
-int GetMagicSchool(Form *form)
+int GetMagicSchool(TESForm *form)
 {
 	__asm
 	{
@@ -260,14 +215,14 @@ int GetMagicSchool(Form *form)
 	}
 }
 
-int GetMagicSkillLevel(Form *form)
+int GetMagicSkillLevel(TESForm *form)
 {
-	EffectData* data = GetCostliestEffect(form);
+	EffectSetting* mgef = GetCostliestEffect(form);
 
-	if (data == NULL)
+	if (mgef == NULL)
 		return -1;
 
-	return data->skillLevel;
+	return mgef->unk38.unk28;
 }
 
 
@@ -285,7 +240,7 @@ StandardItemData *GetStandardItemData(StandardItemData *sid, void **callbacks, I
 	}
 }
 
-MagicItemData *GetMagicItemData(MagicItemData *sid, void **callbacks, Form *form, int a4)
+MagicItemData *GetMagicItemData(MagicItemData *sid, void **callbacks, TESForm *form, int a4)
 {
 	UInt32 func = Addresses.GetMagicItemData;
 	__asm
@@ -307,58 +262,82 @@ StandardItemData * __stdcall MyGetStandardItemData(StandardItemData *sid, void *
 {
 	StandardItemData *info = GetStandardItemData(sid, callbacks, item, a4);
 	
-	if (*callbacks == NULL || item->form == NULL)
+	TESForm* form = item->form;
+
+	if (*callbacks == NULL || form == NULL)
 		return info;
 
-	unsigned char formType = GetFormType(item->form);
+	UInt8 formType = form->formType;
 
 	//_MESSAGE("item %u %f %d", formType, weight, value);
 
 	RegisterBool(&info->fxValue, "extended", true);
 	RegisterNumber(&info->fxValue, "formType", (double)formType);
 
+	// Armor
 	if (formType == Constants.FormType_Armor) {
-		double armor = GetItemArmor(item);
-		armor = round(armor);
+		TESObjectARMO* armorForm = DYNAMIC_CAST(form, TESForm, TESObjectARMO);
 
-		RegisterNumber(&info->fxValue, "armor", armor);
+		if (armorForm) {
+			double armorValue = GetItemArmor(item);
+			armorValue = round(armorValue);
+
+			RegisterNumber(&info->fxValue, "armor", armorValue);
+		}
+	
+	// Weapon
 	} else if (formType == Constants.FormType_Weapon) {
-		unsigned char weaponType = item->form->data[0xC4+0x31];
+		TESObjectWEAP* weaponForm = DYNAMIC_CAST(form, TESForm, TESObjectWEAP);
+
+		if (weaponForm) {
+			UInt8 weaponType = weaponForm->unk0C4.type;
 		
-		double damage = GetItemDamage(item);
-		damage = round(damage);
+			double damage = GetItemDamage(item);
+			damage = round(damage);
 
-		RegisterNumber(&info->fxValue, "subType", (double)weaponType);
-		RegisterNumber(&info->fxValue, "damage", damage);
+			RegisterNumber(&info->fxValue, "subType", (double)weaponType);
+			RegisterNumber(&info->fxValue, "damage", damage);
+		}
+
+	// Ammo
 	} else if (formType == Constants.FormType_Ammo) {
-		double damage = GetItemDamage(item);
-		damage = round(damage);
+		TESAmmo* ammoForm = DYNAMIC_CAST(form, TESForm, TESAmmo);
 
-		RegisterNumber((GFxValue*)&info->fxValue, "damage", damage);
+		if (ammoForm) {
+			double damage = GetItemDamage(item);
+			damage = round(damage);
+
+			RegisterNumber(&info->fxValue, "damage", damage);
+		}
 	}
 
 	return info;
 }
 
 
-MagicItemData * __stdcall MyGetMagicItemData(MagicItemData *sid, void **callbacks, Form *form, int a4)
+MagicItemData * __stdcall MyGetMagicItemData(MagicItemData *sid, void **callbacks, TESForm *form, int a4)
 {
 	MagicItemData *info = GetMagicItemData(sid, callbacks, form, a4);
 	
 	if (*callbacks == NULL || form == NULL)
 		return info;
 
-	unsigned char formType = GetFormType(form);
+	UInt8 formType = form->formType;
 
-	RegisterBool((GFxValue*)&info->fxValue, "extended", true);
-	RegisterNumber((GFxValue*)&info->fxValue, "formType", (double)formType);
+	RegisterBool(&info->fxValue, "extended", true);
+	RegisterNumber(&info->fxValue, "formType", (double)formType);
 
+	// Spell
 	if (formType == Constants.FormType_SpellItem) {
-		int schoolType = GetMagicSchool(form);
-		int skillLevel = GetMagicSkillLevel(form);
+		SpellItem* spellForm = DYNAMIC_CAST(form, TESForm, SpellItem);
 
-		RegisterNumber((GFxValue*)&info->fxValue, "subType", (double)schoolType);
-		RegisterNumber((GFxValue*)&info->fxValue, "skillLevel", (double)skillLevel);
+		if (spellForm) {
+			int schoolType = GetMagicSchool(spellForm);
+			int skillLevel = GetMagicSkillLevel(spellForm);
+
+			RegisterNumber(&info->fxValue, "subType", (double)schoolType);
+			RegisterNumber(&info->fxValue, "skillLevel", (double)skillLevel);
+		}
 	}
 
 	return info;
