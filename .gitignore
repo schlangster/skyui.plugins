@@ -9,3 +9,7 @@
 /skse/SKSEPlugins.suo
 /skse/skse.ncb
 /skse/skse.sdf
+/skse/ipch
+/skse/gibbed_interface_extensions/Debug
+/skse/gibbed_interface_extensions/Release
+/skse/SKSEPlugins.sdf
