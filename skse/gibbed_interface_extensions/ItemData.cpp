@@ -31,16 +31,12 @@
 #include "skse/GameForms.h"
 #include "skse/GameObjects.h"
 #include "skse/GameRTTI.h"
+#include "skse/GameAPI.h"
 
 #include "ItemData.h"
 
 struct _Addresses
 {
-	UInt32 PlayerCharacter;
-	
-	UInt32 GetFormType;
-	UInt32 GetFormWeight;
-
 	UInt32 GetItemValue;
 	UInt32 GetItemDamage;
 	UInt32 GetItemArmor;
@@ -80,6 +76,46 @@ struct EffectItem
 	//float	cost;  - maybe?
 };
 
+// Helper
+void RegisterNumber(GFxValue* dst, const char* name, double value)
+{
+	GFxValue	fxValue;
+	fxValue.SetNumber(value);
+	CALL_MEMBER_FN(dst, SetMember)(name, &fxValue);
+}
+
+// Helper
+void RegisterBool(GFxValue* dst, const char* name, bool value)
+{
+	GFxValue	fxValue;
+	fxValue.SetBool(value);
+	CALL_MEMBER_FN(dst, SetMember)(name, &fxValue);
+}
+
+void SetupAddresses1_3_10()
+{
+	memset(&Addresses, 0xCC, sizeof(Addresses));
+	memset(&Constants, 0xCC, sizeof(Constants));
+
+	Addresses.GetItemValue = 0x004A91E0;
+	Addresses.GetItemDamage = 0x00857CD0;
+	Addresses.GetItemArmor = 0x00857990;
+
+	Addresses.UnknEffectFunc1 = 0x0040CBC0;
+
+	Addresses.GetStandardItemData = 0x0099C980;
+	Addresses.GetMagicItemData = 0x009D4F00;
+
+	Constants.FormType_Armor = 0x1A;
+	Constants.FormType_Weapon = 0x29;
+	Constants.FormType_Ammo = 0x2A;
+	Constants.FormType_AlchemyItem = 0x2E;
+
+	Constants.FormType_SpellItem = 0x16;
+	Constants.FormType_TESShout = 0x77;
+	Constants.FormType_EffectSetting = 0x12;
+}
+
 class StandardItemData
 {
 public:
@@ -101,55 +137,38 @@ public:
 	// ?
 };
 
-// Helper
-void RegisterNumber(GFxValue * dst, const char * name, double value)
+StandardItemData* GetStandardItemData(StandardItemData *sid, void **callbacks, Item *item, int a4)
 {
-	GFxValue	fxValue;
-	fxValue.SetNumber(value);
-	CALL_MEMBER_FN(dst, SetMember)(name, &fxValue);
+	UInt32 func = Addresses.GetStandardItemData;
+
+	__asm
+	{
+		push a4
+		push item
+		push callbacks
+		mov ecx, sid
+		call func
+	}
 }
 
-// Helper
-void RegisterBool(GFxValue * dst, const char * name, bool value)
+MagicItemData* GetMagicItemData(MagicItemData *sid, void **callbacks, TESForm *form, int a4)
 {
-	GFxValue	fxValue;
-	fxValue.SetBool(value);
-	CALL_MEMBER_FN(dst, SetMember)(name, &fxValue);
+	UInt32 func = Addresses.GetMagicItemData;
+
+	__asm
+	{
+		push a4
+		push form
+		push callbacks
+		mov ecx, sid
+		call func
+	}
 }
 
-void SetupAddresses1_3_10(void)
-{
-	memset(&Addresses, 0xCC, sizeof(Addresses));
-	memset(&Constants, 0xCC, sizeof(Constants));
-
-	Addresses.PlayerCharacter = 0x01570334;
-
-	Addresses.GetFormType = 0x00403050;
-	Addresses.GetFormWeight = 0x0047FDE0;
-
-	Addresses.GetItemValue = 0x004A91E0;
-	Addresses.GetItemDamage = 0x00857CD0;
-	Addresses.GetItemArmor = 0x00857990;
-
-	Addresses.UnknEffectFunc1 = 0x0040CBC0;
-
-	Addresses.GetStandardItemData = 0x0099C980;
-	Addresses.GetMagicItemData = 0x009D4F00;
-
-	Constants.FormType_Armor = 0x1A;
-	Constants.FormType_Weapon = 0x29;
-	Constants.FormType_Ammo = 0x2A;
-	Constants.FormType_AlchemyItem = 0x2E;
-
-	Constants.FormType_SpellItem = 0x16;
-	Constants.FormType_TESShout = 0x77;
-	Constants.FormType_EffectSetting = 0x12;
-}
-
-double GetItemDamage(Item *item)
+double GetItemDamage(Item* item)
 {
 	UInt32 func = Addresses.GetItemDamage;
-	void *pc = *(void **)Addresses.PlayerCharacter;
+	PlayerCharacter* pc = *(g_thePlayer);
 
 	__asm
 	{
@@ -159,10 +178,10 @@ double GetItemDamage(Item *item)
 	}
 }
 
-double GetItemArmor(Item *item)
+double GetItemArmor(Item* item)
 {
 	UInt32 func = Addresses.GetItemArmor;
-	void *pc = *(void **)Addresses.PlayerCharacter;
+	PlayerCharacter* pc = *(g_thePlayer);
 
 	__asm
 	{
@@ -172,10 +191,9 @@ double GetItemArmor(Item *item)
 	}
 }
 
-EffectSetting * GetCostliestEffect(TESForm *form)
+EffectSetting* GetCostliestEffect(MagicItem* form)
 {
 	UInt32 func1 = Addresses.UnknEffectFunc1;
-
 	EffectItem * effect = NULL;
 
 	__asm
@@ -193,72 +211,12 @@ EffectSetting * GetCostliestEffect(TESForm *form)
 	return effect->mgef;
 }
 
-int GetPotionType(TESForm *form)
-{
-	EffectSetting* mgef = GetCostliestEffect(form);
-
-	if (mgef == NULL)
-		return -1;
-
-	return mgef->unk38.actorValue;
-}
-
-int GetMagicSchool(TESForm *form)
-{
-	__asm
-	{
-		mov edx, form
-		mov eax, [edx]
-		mov ecx, form
-		mov edx, [eax+0x194]
-		call edx
-	}
-}
-
-int GetMagicSkillLevel(TESForm *form)
-{
-	EffectSetting* mgef = GetCostliestEffect(form);
-
-	if (mgef == NULL)
-		return -1;
-
-	return mgef->unk38.unk28;
-}
-
-
-
-StandardItemData *GetStandardItemData(StandardItemData *sid, void **callbacks, Item *item, int a4)
-{
-	UInt32 func = Addresses.GetStandardItemData;
-	__asm
-	{
-		push a4
-		push item
-		push callbacks
-		mov ecx, sid
-		call func
-	}
-}
-
-MagicItemData *GetMagicItemData(MagicItemData *sid, void **callbacks, TESForm *form, int a4)
-{
-	UInt32 func = Addresses.GetMagicItemData;
-	__asm
-	{
-		push a4
-		push form
-		push callbacks
-		mov ecx, sid
-		call func
-	}
-}
-
 double round(double r)
 {
 	return (r >= 0.0) ? floor(r + 0.5) : ceil(r - 0.5);
 }
 
-StandardItemData * __stdcall MyGetStandardItemData(StandardItemData *sid, void **callbacks, Item *item, int a4)
+StandardItemData* __stdcall MyGetStandardItemData(StandardItemData *sid, void **callbacks, Item *item, int a4)
 {
 	StandardItemData *info = GetStandardItemData(sid, callbacks, item, a4);
 	
@@ -315,7 +273,7 @@ StandardItemData * __stdcall MyGetStandardItemData(StandardItemData *sid, void *
 }
 
 
-MagicItemData * __stdcall MyGetMagicItemData(MagicItemData *sid, void **callbacks, TESForm *form, int a4)
+MagicItemData* __stdcall MyGetMagicItemData(MagicItemData *sid, void **callbacks, TESForm *form, int a4)
 {
 	MagicItemData *info = GetMagicItemData(sid, callbacks, form, a4);
 	
@@ -332,11 +290,14 @@ MagicItemData * __stdcall MyGetMagicItemData(MagicItemData *sid, void **callback
 		SpellItem* spellForm = DYNAMIC_CAST(form, TESForm, SpellItem);
 
 		if (spellForm) {
-			int schoolType = GetMagicSchool(spellForm);
-			int skillLevel = GetMagicSkillLevel(spellForm);
+			EffectSetting* mgef = GetCostliestEffect(spellForm);
 
-			RegisterNumber(&info->fxValue, "subType", (double)schoolType);
-			RegisterNumber(&info->fxValue, "skillLevel", (double)skillLevel);
+			if (mgef) {
+				int schoolType = mgef->unk38.school;
+				int skillLevel = mgef->unk38.unk28;
+				RegisterNumber(&info->fxValue, "subType", (double)schoolType);
+				RegisterNumber(&info->fxValue, "skillLevel", (double)skillLevel);
+			}
 		}
 	}
 
