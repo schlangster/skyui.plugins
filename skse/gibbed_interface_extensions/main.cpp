@@ -20,6 +20,11 @@
  *    distribution.
  */
 
+/* This is a modified version of the original gibbed_interface_extensions.
+ * The original source code can be found at
+ *	http://svn.gib.me/public/elderscrolls/trunk/mods/skse_plugins/gibbed_interface_extensions/
+ */
+
 #include <windows.h>
 
 #include "skse/skse_version.h"

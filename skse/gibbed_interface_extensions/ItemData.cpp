@@ -20,53 +20,25 @@
  *    distribution.
  */
 
+/* This is a modified version of the original gibbed_interface_extensions.
+ * The original source code can be found at
+ *	http://svn.gib.me/public/elderscrolls/trunk/mods/skse_plugins/gibbed_interface_extensions/
+ */
+
 #include <windows.h>
 #include <math.h>
 
 #include "skse/skse_version.h"
 #include "skse/ScaleformCallbacks.h"
-#include "skse/ScaleformMovie.h"
-#include "skse/ScaleformAPI.h"
 #include "skse/SafeWrite.h"
 #include "skse/GameForms.h"
 #include "skse/GameObjects.h"
+#include "skse/GameReferences.h"
 #include "skse/GameRTTI.h"
 #include "skse/GameAPI.h"
-#include "skse/GameReferences.h"
 
 #include "ItemData.h"
 
-
-struct _Addresses
-{
-	UInt32 GetItemDamage;
-	UInt32 GetItemArmor;
-
-	UInt32 UnknEffectFunc1;
-}
-Addresses;
-	
-struct _Constants
-{
-	UInt32	FormType_Armor;
-	UInt32	FormType_Weapon;
-	UInt32	FormType_Ammo;
-	UInt32	FormType_AlchemyItem;
-
-	UInt32	FormType_SpellItem;
-	UInt32	FormType_TESShout;
-	UInt32	FormType_EffectSetting;
-}
-Constants;
-
-struct EffectItem
-{
-	float			magnitude;		// 000
-	UInt32			area;			// 004
-	UInt32			duration;		// 008
-	EffectSetting*	mgef;	// 00C
-	//float	cost;  - maybe?
-};
 
 // Helper
 void RegisterNumber(GFxValue* dst, const char* name, double value)
@@ -76,6 +48,7 @@ void RegisterNumber(GFxValue* dst, const char* name, double value)
 	CALL_MEMBER_FN(dst, SetMember)(name, &fxValue);
 }
 
+
 // Helper
 void RegisterBool(GFxValue* dst, const char* name, bool value)
 {
@@ -84,78 +57,14 @@ void RegisterBool(GFxValue* dst, const char* name, bool value)
 	CALL_MEMBER_FN(dst, SetMember)(name, &fxValue);
 }
 
-void SetupAddresses1_3_10()
-{
-	memset(&Addresses, 0xCC, sizeof(Addresses));
-	memset(&Constants, 0xCC, sizeof(Constants));
-
-	Addresses.GetItemDamage = 0x00857CD0;
-	Addresses.GetItemArmor = 0x00857990;
-
-	Addresses.UnknEffectFunc1 = 0x0040CBC0;
-
-	Constants.FormType_Armor = 0x1A;
-	Constants.FormType_Weapon = 0x29;
-	Constants.FormType_Ammo = 0x2A;
-	Constants.FormType_AlchemyItem = 0x2E;
-
-	Constants.FormType_SpellItem = 0x16;
-	Constants.FormType_TESShout = 0x77;
-	Constants.FormType_EffectSetting = 0x12;
-}
-
-double GetItemDamage(Item* item)
-{
-	UInt32 func = Addresses.GetItemDamage;
-	PlayerCharacter* pc = *(g_thePlayer);
-
-	__asm
-	{
-		push item
-		mov ecx, pc
-		call func
-	}
-}
-
-double GetItemArmor(Item* item)
-{
-	UInt32 func = Addresses.GetItemArmor;
-	PlayerCharacter* pc = *(g_thePlayer);
-
-	__asm
-	{
-		push item
-		mov ecx, pc
-		call func
-	}
-}
-
-EffectSetting* GetCostliestEffect(MagicItem* form)
-{
-	UInt32 func1 = Addresses.UnknEffectFunc1;
-	EffectItem * effect = NULL;
-
-	__asm
-	{
-		push 0
-		push 5
-		mov ecx, form
-		call func1
-		mov effect, eax
-	}
-
-	if (effect == NULL)
-		return NULL;
-
-	return effect->mgef;
-}
 
 double round(double r)
 {
 	return (r >= 0.0) ? floor(r + 0.5) : ceil(r - 0.5);
 }
 
-StandardItemData* __stdcall MyGetStandardItemData(StandardItemData *sid, void **callbacks, Item *item, int a4)
+
+StandardItemData* __stdcall MyGetStandardItemData(StandardItemData* sid, void** callbacks, Item* item, int a4)
 {
 	StandardItemData *info = CALL_MEMBER_FN(sid, GetStandardItemData)(callbacks, item, a4);
 	
@@ -172,24 +81,26 @@ StandardItemData* __stdcall MyGetStandardItemData(StandardItemData *sid, void **
 	RegisterNumber(&info->fxValue, "formType", (double)formType);
 
 	// Armor
-	if (formType == Constants.FormType_Armor) {
+	if (formType == kFormType_TESObjectARMO) {
 		TESObjectARMO* armorForm = DYNAMIC_CAST(form, TESForm, TESObjectARMO);
 
 		if (armorForm) {
-			double armorValue = GetItemArmor(item);
+			ExtPlayerCharacter* pc = static_cast<ExtPlayerCharacter*>(*g_thePlayer);
+			double armorValue = CALL_MEMBER_FN(pc, GetItemArmor)(item);
 			armorValue = round(armorValue);
 
 			RegisterNumber(&info->fxValue, "armor", armorValue);
 		}
 	
 	// Weapon
-	} else if (formType == Constants.FormType_Weapon) {
+	} else if (formType == kFormType_TESObjectWEAP) {
 		TESObjectWEAP* weaponForm = DYNAMIC_CAST(form, TESForm, TESObjectWEAP);
 
 		if (weaponForm) {
 			UInt8 weaponType = weaponForm->unk0C4.type;
 		
-			double damage = GetItemDamage(item);
+			ExtPlayerCharacter* pc = static_cast<ExtPlayerCharacter*>(*g_thePlayer);
+			double damage = CALL_MEMBER_FN(pc, GetItemDamage)(item);
 			damage = round(damage);
 
 			RegisterNumber(&info->fxValue, "subType", (double)weaponType);
@@ -197,11 +108,12 @@ StandardItemData* __stdcall MyGetStandardItemData(StandardItemData *sid, void **
 		}
 
 	// Ammo
-	} else if (formType == Constants.FormType_Ammo) {
+	} else if (formType == kFormType_TESAmmo) {
 		TESAmmo* ammoForm = DYNAMIC_CAST(form, TESForm, TESAmmo);
 
 		if (ammoForm) {
-			double damage = GetItemDamage(item);
+			ExtPlayerCharacter* pc = static_cast<ExtPlayerCharacter*>(*g_thePlayer);
+			double damage = CALL_MEMBER_FN(pc, GetItemDamage)(item);
 			damage = round(damage);
 
 			RegisterNumber(&info->fxValue, "damage", damage);
@@ -212,7 +124,7 @@ StandardItemData* __stdcall MyGetStandardItemData(StandardItemData *sid, void **
 }
 
 
-MagicItemData* __stdcall MyGetMagicItemData(MagicItemData *mid, void **callbacks, TESForm *form, int a4)
+MagicItemData* __stdcall MyGetMagicItemData(MagicItemData* mid, void** callbacks, TESForm* form, int a4)
 {
 	MagicItemData *info = CALL_MEMBER_FN(mid, GetMagicItemData)(callbacks, form, a4);
 	
@@ -225,15 +137,16 @@ MagicItemData* __stdcall MyGetMagicItemData(MagicItemData *mid, void **callbacks
 	RegisterNumber(&info->fxValue, "formType", (double)formType);
 
 	// Spell
-	if (formType == Constants.FormType_SpellItem) {
-		SpellItem* spellForm = DYNAMIC_CAST(form, TESForm, SpellItem);
+	if (formType == kFormType_SpellItem) {
+		MagicItem* spellForm = DYNAMIC_CAST(form, TESForm, MagicItem);
 
 		if (spellForm) {
-			EffectSetting* mgef = GetCostliestEffect(spellForm);
-
-			if (mgef) {
-				int schoolType = mgef->unk38.school;
-				int skillLevel = mgef->unk38.unk28;
+			ExtMagicItem* extSpell = static_cast<ExtMagicItem*>(spellForm);
+			ExtMagicItem::EffectItem* effect = CALL_MEMBER_FN(extSpell, GetCostliestEffectItem)(5, 0);
+			
+			if (effect && effect->mgef) {
+				int schoolType = effect->mgef->unk38.school;
+				int skillLevel = effect->mgef->unk38.unk28;
 				RegisterNumber(&info->fxValue, "subType", (double)schoolType);
 				RegisterNumber(&info->fxValue, "skillLevel", (double)skillLevel);
 			}
@@ -242,6 +155,7 @@ MagicItemData* __stdcall MyGetMagicItemData(MagicItemData *mid, void **callbacks
 
 	return info;
 }
+
 
 void __declspec(naked) stub_MyGetStandardItemData(void)
 {
@@ -259,6 +173,7 @@ void __declspec(naked) stub_MyGetStandardItemData(void)
 	}
 }
 
+
 void __declspec(naked) stub_MyGetMagicItemData(void)
 {
 	__asm
@@ -275,6 +190,7 @@ void __declspec(naked) stub_MyGetMagicItemData(void)
 	}
 }
 
+
 bool patch_ItemData(UInt32 version)
 {
 	UInt32 standardItemCall = NULL;
@@ -284,25 +200,19 @@ bool patch_ItemData(UInt32 version)
 	{
 		case RUNTIME_VERSION_1_3_10_0:
 		{
-			SetupAddresses1_3_10();
-
 			// StandardItemData
 			standardItemCall = 0x0099C761;
 
 			unsigned char original1[] = { 0xE8, 0x1A, 0x02, 0x00, 0x00 };
 			if (memcmp((void *)standardItemCall, original1, sizeof(original1)) != 0)
-			{
 				return false;
-			}
 
 			// MagicItemData
 			magicItemCall = 0x009D4C11;
 
 			unsigned char original2[] = { 0xE8, 0xEA, 0x02, 0x00, 0x00 };
 			if (memcmp((void *)magicItemCall, original2, sizeof(original2)) != 0)
-			{
 				return false;
-			}
 
 			break;
 		}
