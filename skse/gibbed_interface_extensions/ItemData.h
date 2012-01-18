@@ -22,4 +22,48 @@
 
 #pragma once
 
+#include "skse/ScaleformCallbacks.h"
+#include "skse/ScaleformMovie.h"
+#include "skse/ScaleformAPI.h"
+#include "skse/GameForms.h"
+#include "skse/GameObjects.h"
+#include "skse/GameRTTI.h"
+#include "skse/GameAPI.h"
+#include "skse/GameReferences.h"
+
+
+class Item
+{
+public:
+	TESForm			*form;				// 000
+};
+
+class StandardItemData
+{
+public:
+	unsigned int	vtable;		// 000
+	Item *			item;		// 004
+	void *			unknown08;	// 008
+	unsigned int	unknown0C;	// 00C
+	GFxValue		fxValue;	// 010
+	// ?
+
+	MEMBER_FN_PREFIX(StandardItemData);
+	DEFINE_MEMBER_FN(GetStandardItemData, StandardItemData*, 0x0099C980,  void **callbacks, Item *item, int a4);
+};
+
+class MagicItemData
+{
+public:
+	unsigned int	vtable;				// 000	
+	unsigned char	unkn_004[0x008];	// 004
+	TESForm *		form;				// 00C
+	GFxValue		fxValue;			// 010
+	// ?
+
+	MEMBER_FN_PREFIX(MagicItemData);
+	DEFINE_MEMBER_FN(GetMagicItemData, MagicItemData*, 0x009D4F00, void **callbacks, TESForm *form, int a4);
+};
+
 bool patch_ItemData(UInt32 version);
+

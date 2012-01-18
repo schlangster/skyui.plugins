@@ -32,19 +32,17 @@
 #include "skse/GameObjects.h"
 #include "skse/GameRTTI.h"
 #include "skse/GameAPI.h"
+#include "skse/GameReferences.h"
 
 #include "ItemData.h"
 
+
 struct _Addresses
 {
-	UInt32 GetItemValue;
 	UInt32 GetItemDamage;
 	UInt32 GetItemArmor;
 
 	UInt32 UnknEffectFunc1;
-
-	UInt32 GetStandardItemData;
-	UInt32 GetMagicItemData;
 }
 Addresses;
 	
@@ -60,12 +58,6 @@ struct _Constants
 	UInt32	FormType_EffectSetting;
 }
 Constants;
-
-class Item
-{
-public:
-	TESForm			*form;				// 000
-};
 
 struct EffectItem
 {
@@ -97,14 +89,10 @@ void SetupAddresses1_3_10()
 	memset(&Addresses, 0xCC, sizeof(Addresses));
 	memset(&Constants, 0xCC, sizeof(Constants));
 
-	Addresses.GetItemValue = 0x004A91E0;
 	Addresses.GetItemDamage = 0x00857CD0;
 	Addresses.GetItemArmor = 0x00857990;
 
 	Addresses.UnknEffectFunc1 = 0x0040CBC0;
-
-	Addresses.GetStandardItemData = 0x0099C980;
-	Addresses.GetMagicItemData = 0x009D4F00;
 
 	Constants.FormType_Armor = 0x1A;
 	Constants.FormType_Weapon = 0x29;
@@ -114,55 +102,6 @@ void SetupAddresses1_3_10()
 	Constants.FormType_SpellItem = 0x16;
 	Constants.FormType_TESShout = 0x77;
 	Constants.FormType_EffectSetting = 0x12;
-}
-
-class StandardItemData
-{
-public:
-	unsigned int	vtable;		// 000
-	Item *			item;		// 004
-	void *			unknown08;	// 008
-	unsigned int	unknown0C;	// 00C
-	GFxValue		fxValue;	// 010
-	// ?
-};
-
-class MagicItemData
-{
-public:
-	unsigned int	vtable;				// 000	
-	unsigned char	unkn_004[0x008];	// 004
-	TESForm *		form;				// 00C
-	GFxValue		fxValue;			// 010
-	// ?
-};
-
-StandardItemData* GetStandardItemData(StandardItemData *sid, void **callbacks, Item *item, int a4)
-{
-	UInt32 func = Addresses.GetStandardItemData;
-
-	__asm
-	{
-		push a4
-		push item
-		push callbacks
-		mov ecx, sid
-		call func
-	}
-}
-
-MagicItemData* GetMagicItemData(MagicItemData *sid, void **callbacks, TESForm *form, int a4)
-{
-	UInt32 func = Addresses.GetMagicItemData;
-
-	__asm
-	{
-		push a4
-		push form
-		push callbacks
-		mov ecx, sid
-		call func
-	}
 }
 
 double GetItemDamage(Item* item)
@@ -218,7 +157,7 @@ double round(double r)
 
 StandardItemData* __stdcall MyGetStandardItemData(StandardItemData *sid, void **callbacks, Item *item, int a4)
 {
-	StandardItemData *info = GetStandardItemData(sid, callbacks, item, a4);
+	StandardItemData *info = CALL_MEMBER_FN(sid, GetStandardItemData)(callbacks, item, a4);
 	
 	TESForm* form = item->form;
 
@@ -273,9 +212,9 @@ StandardItemData* __stdcall MyGetStandardItemData(StandardItemData *sid, void **
 }
 
 
-MagicItemData* __stdcall MyGetMagicItemData(MagicItemData *sid, void **callbacks, TESForm *form, int a4)
+MagicItemData* __stdcall MyGetMagicItemData(MagicItemData *mid, void **callbacks, TESForm *form, int a4)
 {
-	MagicItemData *info = GetMagicItemData(sid, callbacks, form, a4);
+	MagicItemData *info = CALL_MEMBER_FN(mid, GetMagicItemData)(callbacks, form, a4);
 	
 	if (*callbacks == NULL || form == NULL)
 		return info;
@@ -303,7 +242,6 @@ MagicItemData* __stdcall MyGetMagicItemData(MagicItemData *sid, void **callbacks
 
 	return info;
 }
-
 
 void __declspec(naked) stub_MyGetStandardItemData(void)
 {
