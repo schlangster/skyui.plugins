@@ -193,7 +193,7 @@ class ExtMagicItem : public MagicItem
 {
 public:
 	MEMBER_FN_PREFIX(ExtMagicItem);
-	DEFINE_MEMBER_FN(GetCostliestEffectItem, EffectItem*, 0x0040CBC0, int a1, int a2);
+	DEFINE_MEMBER_FN(GetCostliestEffectItem, EffectItem*, 0x0040CBC0, int arg1, bool arg2);
 };
 
 
@@ -208,7 +208,7 @@ public:
 	// ?
 
 	MEMBER_FN_PREFIX(StandardItemData);
-	DEFINE_MEMBER_FN(GetStandardItemData, StandardItemData*, 0x0099C980,  void** callbacks, Item* item, int a4);
+	DEFINE_MEMBER_FN(GetStandardItemData, StandardItemData*, 0x0099C980,  void** callbacks, Item* item, int arg4);
 };
 
 
@@ -222,7 +222,7 @@ public:
 	// ?
 
 	MEMBER_FN_PREFIX(MagicItemData);
-	DEFINE_MEMBER_FN(GetMagicItemData, MagicItemData*, 0x009D4F00, void** callbacks, TESForm* form, int a4);
+	DEFINE_MEMBER_FN(GetMagicItemData, MagicItemData*, 0x009D4F00, void** callbacks, TESForm* form, int arg4);
 };
 
 

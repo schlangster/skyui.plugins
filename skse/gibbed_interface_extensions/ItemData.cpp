@@ -64,9 +64,9 @@ double round(double r)
 }
 
 
-StandardItemData* __stdcall MyGetStandardItemData(StandardItemData* sid, void** callbacks, Item* item, int a4)
+StandardItemData* __stdcall MyGetStandardItemData(StandardItemData* sid, void** callbacks, Item* item, int arg4)
 {
-	StandardItemData *info = CALL_MEMBER_FN(sid, GetStandardItemData)(callbacks, item, a4);
+	StandardItemData *info = CALL_MEMBER_FN(sid, GetStandardItemData)(callbacks, item, arg4);
 	
 	TESForm* form = item->form;
 
@@ -124,9 +124,9 @@ StandardItemData* __stdcall MyGetStandardItemData(StandardItemData* sid, void** 
 }
 
 
-MagicItemData* __stdcall MyGetMagicItemData(MagicItemData* mid, void** callbacks, TESForm* form, int a4)
+MagicItemData* __stdcall MyGetMagicItemData(MagicItemData* mid, void** callbacks, TESForm* form, int arg4)
 {
-	MagicItemData *info = CALL_MEMBER_FN(mid, GetMagicItemData)(callbacks, form, a4);
+	MagicItemData *info = CALL_MEMBER_FN(mid, GetMagicItemData)(callbacks, form, arg4);
 	
 	if (*callbacks == NULL || form == NULL)
 		return info;
@@ -142,7 +142,7 @@ MagicItemData* __stdcall MyGetMagicItemData(MagicItemData* mid, void** callbacks
 
 		if (spellForm) {
 			ExtMagicItem* extSpell = static_cast<ExtMagicItem*>(spellForm);
-			ExtMagicItem::EffectItem* effect = CALL_MEMBER_FN(extSpell, GetCostliestEffectItem)(5, 0);
+			ExtMagicItem::EffectItem* effect = CALL_MEMBER_FN(extSpell, GetCostliestEffectItem)(5, false);
 			
 			if (effect && effect->mgef) {
 				int schoolType = effect->mgef->unk38.school;
