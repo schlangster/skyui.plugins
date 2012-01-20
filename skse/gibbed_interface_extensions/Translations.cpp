@@ -13,7 +13,7 @@ bool GenerateMergedTranslateFile()
 	IFileStream mergedFile = IFileStream();
 	IFileStream inputFile = IFileStream();
 
-	std::string	runtimeDirectory = GetRuntimeDirectory();
+	std::string runtimeDirectory = GetRuntimeDirectory();
 
 	if(runtimeDirectory.empty())
 		return false;
@@ -22,7 +22,6 @@ bool GenerateMergedTranslateFile()
 	if (*g_gameLanguage == NULL)
 		return false;
 
-
 	// Initialize the merged file with default translates
 	mergedFile.Create("Data\\Interface\\Translate_MERGED.txt");
 
@@ -30,7 +29,7 @@ bool GenerateMergedTranslateFile()
 	if (inputFile.Open(defaultTranslateFilePath.c_str())) {
 		IFileStream::CopyStreams(&mergedFile, &inputFile);
 		inputFile.Close();
-		_DMESSAGE("Translations: merged %s", defaultTranslateFilePath.c_str());
+		_MESSAGE("Translations: merged %s", defaultTranslateFilePath.c_str());
 
 	// Couldn't copy the default file, so bail out and use the original location instead
 	} else {

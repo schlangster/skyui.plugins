@@ -1,4 +1,9 @@
 
+*.user
+*.ncb
+*.suo
+*.sdf
+*.opensdf
 /skse/_ReSharper.skse
 /skse/_ReSharper.SKSEPlugins
 /skse/Debug
@@ -6,11 +11,6 @@
 /skse/skse
 /skse/SKSEPlugins.6.0.ReSharper.user
 /common
-/skse/SKSEPlugins.suo
-/skse/skse.ncb
-/skse/skse.sdf
 /skse/ipch
 /skse/gibbed_interface_extensions/Debug
 /skse/gibbed_interface_extensions/Release
-/skse/SKSEPlugins.sdf
-/skse/SKSEPlugins.opensdf
