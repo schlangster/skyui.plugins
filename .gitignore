@@ -4,13 +4,7 @@
 *.suo
 *.sdf
 *.opensdf
-/skse/_ReSharper.skse
-/skse/_ReSharper.SKSEPlugins
-/skse/Debug
-/skse/Release
+Debug/
+Release/
 /skse/skse
-/skse/SKSEPlugins.6.0.ReSharper.user
 /common
-/skse/ipch
-/skse/gibbed_interface_extensions/Debug
-/skse/gibbed_interface_extensions/Release

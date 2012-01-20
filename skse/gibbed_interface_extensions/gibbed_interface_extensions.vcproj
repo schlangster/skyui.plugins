@@ -171,6 +171,11 @@
 	<References>
 		<ProjectReference
 			ReferencedProjectIdentifier="{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}"
+			RelativePathToProject="..\common\common_vc9.vcproj"
+		/>
+		<ProjectReference
+			ReferencedProjectIdentifier="{AA0365EC-47EA-45AA-BB1F-EBBCCCC466F2}"
+			RelativePathToProject=".\skse\skse.vcproj"
 		/>
 	</References>
 	<Files>
