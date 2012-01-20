@@ -112,9 +112,11 @@
   <ItemGroup>
     <ClCompile Include="ItemData.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Translations.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ItemData.h" />
+    <ClInclude Include="Translations.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />

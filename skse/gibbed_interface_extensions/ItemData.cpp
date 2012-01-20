@@ -191,43 +191,23 @@ void __declspec(naked) stub_MyGetMagicItemData(void)
 }
 
 
-bool patch_ItemData(UInt32 version)
+bool PatchItemData()
 {
-	UInt32 standardItemCall = NULL;
-	UInt32 magicItemCall = NULL;
+	UInt32 standardItemCall = 0x0099C761;
+	UInt32 magicItemCall = 0x009D4C11;
 
-	switch (version)
-	{
-		case RUNTIME_VERSION_1_3_10_0:
-		{
-			// StandardItemData
-			standardItemCall = 0x0099C761;
+	// StandardItemData
+	unsigned char original1[] = { 0xE8, 0x1A, 0x02, 0x00, 0x00 };
+	if (memcmp((void *)standardItemCall, original1, sizeof(original1)) != 0)
+		return false;
 
-			unsigned char original1[] = { 0xE8, 0x1A, 0x02, 0x00, 0x00 };
-			if (memcmp((void *)standardItemCall, original1, sizeof(original1)) != 0)
-				return false;
+	// MagicItemData
+	unsigned char original2[] = { 0xE8, 0xEA, 0x02, 0x00, 0x00 };
+	if (memcmp((void *)magicItemCall, original2, sizeof(original2)) != 0)
+		return false;
 
-			// MagicItemData
-			magicItemCall = 0x009D4C11;
-
-			unsigned char original2[] = { 0xE8, 0xEA, 0x02, 0x00, 0x00 };
-			if (memcmp((void *)magicItemCall, original2, sizeof(original2)) != 0)
-				return false;
-
-			break;
-		}
-
-		default:
-		{
-			return false;
-		}
-	}
-
-	if (standardItemCall)
-		WriteRelCall(standardItemCall, (UInt32)&stub_MyGetStandardItemData);
-
-	if (magicItemCall)
-		WriteRelCall(magicItemCall, (UInt32)&stub_MyGetMagicItemData);
+	WriteRelCall(standardItemCall, (UInt32)&stub_MyGetStandardItemData);
+	WriteRelCall(magicItemCall, (UInt32)&stub_MyGetMagicItemData);
 
 	return true;
 }

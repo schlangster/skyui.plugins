@@ -226,4 +226,4 @@ public:
 };
 
 
-bool patch_ItemData(UInt32 version);
+bool PatchItemData();
