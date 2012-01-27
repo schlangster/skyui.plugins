@@ -1,14 +1,13 @@
 #include <string>
 #include <Windows.h>
 
-#include "skse/GameAPI.h"
 #include "skse/SafeWrite.h"
 #include "skse/Utilities.h"
 #include "common/IDirectoryIterator.h"
 #include "common/IFileStream.h"
 
 
-bool GenerateMergedTranslateFile()
+bool GenerateMergedTranslateFile(const char* language)
 {
 	IFileStream mergedFile = IFileStream();
 	IFileStream inputFile = IFileStream();
@@ -17,15 +16,11 @@ bool GenerateMergedTranslateFile()
 
 	if(runtimeDirectory.empty())
 		return false;
-	
-	// Language not set
-	if (*g_gameLanguage == NULL)
-		return false;
 
 	// Initialize the merged file with default translates
 	mergedFile.Create("Data\\Interface\\Translate_MERGED.txt");
 
-	std::string defaultTranslateFilePath = runtimeDirectory + "Data\\Interface\\Translate_" + *g_gameLanguage + ".txt";
+	std::string defaultTranslateFilePath = runtimeDirectory + "Data\\Interface\\Translate_" + language + ".txt";
 	if (inputFile.Open(defaultTranslateFilePath.c_str())) {
 		IFileStream::CopyStreams(&mergedFile, &inputFile);
 		inputFile.Close();
@@ -50,7 +45,7 @@ bool GenerateMergedTranslateFile()
 			if (attr & FILE_ATTRIBUTE_DIRECTORY) {
 				std::string	modPath = iter.GetFullPath();
 
-				std::string modTranslateFilePath = iter.GetFullPath() + "\\" + *g_gameLanguage + ".txt";
+				std::string modTranslateFilePath = iter.GetFullPath() + "\\" + language + ".txt";
 				if (inputFile.Open(modTranslateFilePath.c_str())) {
 					found = true;
 
@@ -88,10 +83,12 @@ int __cdecl MyGetTranslateFilePath(char* translateFilePath, size_t sizeInBytes, 
 	va_list args;
 	va_start(args, format);
 	int len = vsprintf_s(defaultTranslateFilePath, sizeInBytes, format, args);
+	const char* language = va_arg(args, const char*);
 	va_end(args);
 
+
 	// Attempt to create merged translate file, otherwise fall-back to default
-	if (GenerateMergedTranslateFile())
+	if (GenerateMergedTranslateFile(language))
 		strcpy_s(translateFilePath, 0x40, "Interface\\Translate_MERGED.txt");
 	else
 		strcpy_s(translateFilePath, 0x40, defaultTranslateFilePath);
@@ -102,9 +99,9 @@ int __cdecl MyGetTranslateFilePath(char* translateFilePath, size_t sizeInBytes, 
 
 bool PatchTranslations()
 {
-	UInt32 getTranslateFilePathCall = 0x00BF21F6;
+	UInt32 getTranslateFilePathCall = 0x00A45F8C;
 
-	unsigned char original[] = { 0xE8, 0xD5, 0x75, 0x84, 0xFF };
+	unsigned char original[] = { 0xE8, 0x4F, 0xA6, 0x9D, 0xFF };
 	if (memcmp((void *)getTranslateFilePathCall, original, sizeof(original)) != 0)
 		return false;
 

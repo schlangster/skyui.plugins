@@ -2,16 +2,15 @@
 
 #include "skse/skse_version.h"
 #include "skse/PluginAPI.h"
-#include "skse/ScaleformCallbacks.h"
-#include "skse/ScaleformMovie.h"
-#include "skse/GameAPI.h"
+//#include "skse/ScaleformCallbacks.h"
+//#include "skse/ScaleformMovie.h"
 
 #include "Translations.h"
 
 IDebugLog	gLog("skyui_extensions.log");
 
 PluginHandle g_pluginHandle = kPluginHandle_Invalid;
-SKSEScaleformInterface* scaleform = NULL;
+//SKSEScaleformInterface* scaleform = NULL;
 
 //enum languageIDs {CZECH, ENGLISH, FRENCH, GERMAN, ITALIAN, POLISH, RUSSIAN, SPANISH};
 
@@ -65,8 +64,8 @@ bool plugin_query(const SKSEInterface *skse, PluginInfo *info)
 	_MESSAGE("query");
 
 	info->infoVersion = PluginInfo::kInfoVersion;
-	info->name = "skyui extensions";
-	info->version = 4;
+	info->name = "skyui_extensions";
+	info->version = 5;
 
 	g_pluginHandle = skse->GetPluginHandle();
 
@@ -75,7 +74,7 @@ bool plugin_query(const SKSEInterface *skse, PluginInfo *info)
 		return false;
 	}
 
-	if (skse->runtimeVersion != RUNTIME_VERSION_1_3_10_0) {
+	if (skse->runtimeVersion != RUNTIME_VERSION_1_4_20_0) {
 		_ERROR("unsupported runtime version");
 		return false;
 	}
