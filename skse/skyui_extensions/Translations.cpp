@@ -92,9 +92,9 @@ int __cdecl MyGetTranslateFilePath(char* translateFilePath, size_t sizeInBytes, 
 
 	// Attempt to create merged translate file, otherwise fall-back to default
 	if (GenerateMergedTranslateFile())
-		strcpy(translateFilePath, "Interface\\Translate_MERGED.txt");
+		strcpy_s(translateFilePath, 0x40, "Interface\\Translate_MERGED.txt");
 	else
-		strcpy(translateFilePath, defaultTranslateFilePath);
+		strcpy_s(translateFilePath, 0x40, defaultTranslateFilePath);
 
 	return len;
 }

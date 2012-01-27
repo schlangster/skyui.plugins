@@ -5,7 +5,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "common_vc9", "..\common\com
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skse", "skse\skse.vcproj", "{AA0365EC-47EA-45AA-BB1F-EBBCCCC466F2}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gibbed_interface_extensions", "gibbed_interface_extensions\gibbed_interface_extensions.vcproj", "{547171CB-F934-40B9-B788-3C520FE66363}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skyui_extensions", "skyui_extensions\skyui_extensions.vcproj", "{547171CB-F934-40B9-B788-3C520FE66363}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

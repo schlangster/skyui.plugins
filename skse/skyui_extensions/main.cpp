@@ -1,30 +1,3 @@
-/* Copyright (c) 2011 Rick (rick 'at' gibbed 'dot' us)
- * 
- * This software is provided 'as-is', without any express or implied
- * warranty. In no event will the authors be held liable for any damages
- * arising from the use of this software.
- * 
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- * 
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would
- *    be appreciated but is not required.
- * 
- * 2. Altered source versions must be plainly marked as such, and must not
- *    be misrepresented as being the original software.
- * 
- * 3. This notice may not be removed or altered from any source
- *    distribution.
- */
-
-/* This is a modified version of the original gibbed_interface_extensions.
- * The original source code can be found at
- *	http://svn.gib.me/public/elderscrolls/trunk/mods/skse_plugins/gibbed_interface_extensions/
- */
-
 #include <windows.h>
 
 #include "skse/skse_version.h"
@@ -33,10 +6,9 @@
 #include "skse/ScaleformMovie.h"
 #include "skse/GameAPI.h"
 
-#include "ItemData.h"
 #include "Translations.h"
 
-IDebugLog	gLog("gibbed_interface_extensions.log");
+IDebugLog	gLog("skyui_extensions.log");
 
 PluginHandle g_pluginHandle = kPluginHandle_Invalid;
 SKSEScaleformInterface* scaleform = NULL;
@@ -93,13 +65,13 @@ bool plugin_query(const SKSEInterface *skse, PluginInfo *info)
 	_MESSAGE("query");
 
 	info->infoVersion = PluginInfo::kInfoVersion;
-	info->name = "gibbed's interface extensions";
+	info->name = "skyui extensions";
 	info->version = 4;
 
 	g_pluginHandle = skse->GetPluginHandle();
 
 	if (skse->isEditor != 0) {
-		_ERROR("interface extensions not necessary in editor!");
+		_ERROR("skyui not necessary in editor!");
 		return false;
 	}
 
@@ -127,11 +99,6 @@ bool plugin_query(const SKSEInterface *skse, PluginInfo *info)
 
 bool plugin_load(const SKSEInterface *skse)
 {
-	if (PatchItemData() == false) {
-		_ERROR("ItemData patch failure");
-		return false;
-	}
-
 	if (PatchTranslations() == false) {
 		_ERROR("Translations patch failure");
 		return false;

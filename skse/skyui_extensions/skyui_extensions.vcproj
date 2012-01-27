@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9,00"
-	Name="gibbed_interface_extensions"
+	Name="skyui_extensions"
 	ProjectGUID="{547171CB-F934-40B9-B788-3C520FE66363}"
-	RootNamespace="gibbed_interface_extensions"
+	RootNamespace="skyui_extensions"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -181,14 +181,6 @@
 	<Files>
 		<File
 			RelativePath=".\exports.def"
-			>
-		</File>
-		<File
-			RelativePath=".\ItemData.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\ItemData.h"
 			>
 		</File>
 		<File
