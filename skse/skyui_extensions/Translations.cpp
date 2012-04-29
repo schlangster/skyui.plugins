@@ -99,9 +99,9 @@ int __cdecl MyGetTranslateFilePath(char* translateFilePath, size_t sizeInBytes, 
 
 bool PatchTranslations()
 {
-	UInt32 getTranslateFilePathCall = 0x00A45F8C;
-
-	unsigned char original[] = { 0xE8, 0x4F, 0xA6, 0x9D, 0xFF };
+	UInt32 getTranslateFilePathCall = 0x00A45B7C;
+	
+	unsigned char original[] = { 0xE8, 0x0F, 0xA8, 0x9D, 0xFF };
 	if (memcmp((void *)getTranslateFilePathCall, original, sizeof(original)) != 0)
 		return false;
 

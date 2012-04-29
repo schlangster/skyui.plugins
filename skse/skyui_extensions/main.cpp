@@ -74,7 +74,7 @@ bool plugin_query(const SKSEInterface *skse, PluginInfo *info)
 		return false;
 	}
 
-	if (skse->runtimeVersion != RUNTIME_VERSION_1_4_20_0) {
+	if (skse->runtimeVersion != RUNTIME_VERSION_1_4_21_0) {
 		_ERROR("unsupported runtime version");
 		return false;
 	}
