@@ -22,7 +22,7 @@ public:
 		int		unk078;		// 04
 		int		unk07C;		// 08
 		int		unk080;		// 0C
-		char	delim[8];	// 10 EOL delim?
+		char	delim[8];	// 10 end of list?
 		void	* data;		// 18 - pointer to list data, passed to GetMenu
 
 		MEMBER_FN_PREFIX(List);
