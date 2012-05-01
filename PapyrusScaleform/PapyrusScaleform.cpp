@@ -6,31 +6,53 @@
 #include "ScaleformCallbacks.h"
 #include "ScaleformMovie.h"
 
+#include "GameMenus.h"
+
 #include "Utilities.h"
 
 
-GFxMovieView * GetMovieByName(const char * name)
+// sub_A454D0 - ctor
+class MenuManager
+{
+public:
+	// 0C
+	struct List
+	{
+		int		unk074;		// 00
+		int		unk078;		// 04
+		int		unk07C;		// 08
+		int		unk080;		// 0C
+		char	delim[8];	// 10 EOL delim?
+		void	* data;		// 18 - pointer to list data, passed to GetMenu
+
+		MEMBER_FN_PREFIX(List);
+
+		// sub_A32040 is always called before this 
+		DEFINE_MEMBER_FN(GetMenu, bool, 0x00A458C0, void * data, void * name1, void * name2, IMenu * pMenu);
+	};
+	
+	char		pad[74];
+	List		list;	// 074
+	int			* unk090;	// 090 - threadId?
+
+	// ...
+
+	MEMBER_FN_PREFIX(MenuManager);
+	DEFINE_MEMBER_FN(IsMenuOpen, bool, 0x00A447B0, StringCache::Ref * name);
+	//DEFINE_MEMBER_FN(Register, void, 0x00A44A70, const char * name, void * func);
+
+	static MenuManager *	GetSingleton(void)
+	{
+		return *((MenuManager **)0x012B8A98);
+	}
+};
+
+GFxMovieView * GetMovieViewByName(const char * name)
 {
 	// TODO
 	Console_Print("Menu: %s", name);
 	return NULL;
 }
-
-
-class MenuRegistry
-{
-public:
-	MEMBER_FN_PREFIX(MenuRegistry);
-	DEFINE_MEMBER_FN(IsOpen, bool, 0x00A447B0, StringCache::Ref * name);
-	//DEFINE_MEMBER_FN(Register, void, 0x00A44A70, const char * name, void * func);
-
-	static MenuRegistry *	GetSingleton(void)
-	{
-		return *((MenuRegistry **)0x012B8A98);
-	}
-};
-
-
 
 void CreateObjectRoot(GFxMovieView * view, const char * dest)
 {
@@ -133,9 +155,9 @@ namespace papyrusScaleform
 		if (!menu.data || !target.data)
 			return;
 
-		GFxMovieView * view = GetMovieByName(menu.data);
-		GFxValue fxDest;
+		GFxMovieView * view = GetMovieViewByName(menu.data);
 
+		GFxValue fxDest;
 		std::string dest, name;
 		if (!PrepareSet(target.data, view, &fxDest, dest, name))
 			return;
@@ -150,9 +172,9 @@ namespace papyrusScaleform
 		if (!menu.data || !target.data)
 			return;
 
-		GFxMovieView * view = GetMovieByName(menu.data);
-		GFxValue fxDest;
+		GFxMovieView * view = GetMovieViewByName(menu.data);
 
+		GFxValue fxDest;
 		std::string dest, name;
 		if (!PrepareSet(target.data, view, &fxDest, dest, name))
 			return;
@@ -167,9 +189,9 @@ namespace papyrusScaleform
 		if (!menu.data || !target.data)
 			return;
 
-		GFxMovieView * view = GetMovieByName(menu.data);
-		GFxValue fxDest;
+		GFxMovieView * view = GetMovieViewByName(menu.data);
 
+		GFxValue fxDest;
 		std::string dest, name;
 		if (!PrepareSet(target.data, view, &fxDest, dest, name))
 			return;
@@ -184,7 +206,7 @@ namespace papyrusScaleform
 		if (!menu.data || !target.data)
 			return false;
 
-		GFxMovieView * view = GetMovieByName(menu.data);
+		GFxMovieView * view = GetMovieViewByName(menu.data);
 
 		std::string dest, name;
 		if (! ExtractTargetData(target.data, dest, name, true))
@@ -207,7 +229,7 @@ namespace papyrusScaleform
 		if (!menu.data || !target.data)
 			return 0;
 
-		GFxMovieView * view = GetMovieByName(menu.data);
+		GFxMovieView * view = GetMovieViewByName(menu.data);
 
 		std::string dest, name;
 		if (! ExtractTargetData(target.data, dest, name, true))
@@ -230,7 +252,7 @@ namespace papyrusScaleform
 		if (!menu.data || !target.data)
 			return NULL;
 
-		GFxMovieView * view = GetMovieByName(menu.data);
+		GFxMovieView * view = GetMovieViewByName(menu.data);
 
 		std::string dest, name;
 		if (! ExtractTargetData(target.data, dest, name, true))
@@ -253,7 +275,7 @@ namespace papyrusScaleform
 		if (!menu.data || !target.data)
 			return;
 
-		GFxMovieView * view = GetMovieByName(menu.data);
+		GFxMovieView * view = GetMovieViewByName(menu.data);
 
 		std::string dest, name;
 		if (! ExtractTargetData(target.data, dest, name, true))
@@ -271,7 +293,7 @@ namespace papyrusScaleform
 		if (!menu.data || !target.data)
 			return;
 
-		GFxMovieView * view = GetMovieByName(menu.data);
+		GFxMovieView * view = GetMovieViewByName(menu.data);
 
 		std::string dest, name;
 		if (! ExtractTargetData(target.data, dest, name, true))
@@ -290,7 +312,7 @@ namespace papyrusScaleform
 		if (!menu.data || !target.data)
 			return;
 
-		GFxMovieView * view = GetMovieByName(menu.data);
+		GFxMovieView * view = GetMovieViewByName(menu.data);
 		
 		std::string dest, name;
 		if (! ExtractTargetData(target.data, dest, name, true))
@@ -309,7 +331,7 @@ namespace papyrusScaleform
 		if (!menu.data || !target.data)
 			return;
 
-		GFxMovieView * view = GetMovieByName(menu.data);
+		GFxMovieView * view = GetMovieViewByName(menu.data);
 
 		std::string dest, name;
 		if (! ExtractTargetData(target.data, dest, name, true))
