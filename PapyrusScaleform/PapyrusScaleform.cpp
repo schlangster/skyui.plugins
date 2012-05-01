@@ -12,8 +12,25 @@
 GFxMovieView * GetMovieByName(const char * name)
 {
 	// TODO
+	Console_Print("Menu: %s", name);
 	return NULL;
 }
+
+
+class MenuRegistry
+{
+public:
+	MEMBER_FN_PREFIX(MenuRegistry);
+	DEFINE_MEMBER_FN(IsOpen, bool, 0x00A447B0, StringCache::Ref * name);
+	//DEFINE_MEMBER_FN(Register, void, 0x00A44A70, const char * name, void * func);
+
+	static MenuRegistry *	GetSingleton(void)
+	{
+		return *((MenuRegistry **)0x012B8A98);
+	}
+};
+
+
 
 void CreateObjectRoot(GFxMovieView * view, const char * dest)
 {
@@ -40,77 +57,52 @@ void CreateObjectRoot(GFxMovieView * view, const char * dest)
 	}
 }
 
-bool ExtractTargetData(const char * target, GFxMovieView * view, std::string & dest, std::string & name, bool mergeDestAndName = false)
+bool ExtractTargetData(const char * target, std::string & dest, std::string & name, bool mergeDestAndName = false)
 {
-	// target format: MenuName.a.b.c.ValueName
+	// target format: a.b.c.ValueName
 	Console_Print("ExtractTargetData: %s", target);
 
-	UInt32 start = 0;
-	UInt32 end = 0;
-
-	while (true)
-	{
-		// Always need at least menu + name
-		if (target[end] == 0)
-			return false;
-
-		if (target[end] == '.')
-			break;
-		end++;
-	}
+	UInt32 lastDelim = 0;
 
 	std::string t(target);
-	std::string menuName;
 
-	// (MenuName).a.b.c.ValueName
-	menuName = t.substr(0, end);
-	Console_Print("Menu: %s", menuName.c_str());
-	view = GetMovieByName(menuName.c_str());
-	// TODO
-	//if (view == NULL)
-	//	return false;
-
-	start = ++end;
-
-	// Case 1: Append the rest of target to dest if seperate name is not needed
+	// Case 1: dest = _global.target
 	if (mergeDestAndName)
 	{
 		// dest: _global.a.b.c.ValueName
 		dest = "_global.";
-		dest.append(t.substr(start));
+		dest.append(t);
 		Console_Print("dest: %s", dest.c_str());
 		return true;
 	}
 
-	// Try to forward end to last delim if there are any left
-	for (UInt32 i=start; target[i]; i++)
+	// Try to forward to last delim (if there even are any)
+	for (UInt32 i=0; target[i]; i++)
 		if (target[i] == '.')
-			end = i;
+			lastDelim = i;
 
-	// Case 2: There were no more delims, top-level dest
-	if (start == end)
+	// Case 2: No delims, top-level dest
+	if (lastDelim == 0)
 	{
 		Console_Print("Attaching to root");
 		// dest: _global, name: ValueName
 		dest = "_global";
-		name = t.substr(start);
+		name = t;
 		Console_Print("dest: %s", dest.c_str());
 		Console_Print("name: %s", name.c_str());
 		return true;
 	}
 
-	// Case 3: Seperate dest and name for depth>1
+	// Case 3: Separate dest and name
 	Console_Print("Attaching to sub-object");
 
 	// dest: _global.a.b.c
 	dest = "_global.";
-	dest.append(t.substr(start, end - start));
+	dest.append(t.substr(0, lastDelim));
 	Console_Print("dest: %s", dest.c_str());
 
-	start = ++end;
-
 	// name: ValueName
-	name = t.substr(start);
+	name = t.substr(lastDelim+1);
 	Console_Print("name: %s", name.c_str());
 	
 	return true;
@@ -118,7 +110,7 @@ bool ExtractTargetData(const char * target, GFxMovieView * view, std::string & d
 
 bool PrepareSet(const char * target, GFxMovieView * view, GFxValue * fxDest, std::string & dest, std::string & name)
 {
-	if (! ExtractTargetData(target, view, dest, name))
+	if (! ExtractTargetData(target, dest, name))
 		return false;
 
 	// TODO
@@ -136,15 +128,15 @@ bool PrepareSet(const char * target, GFxMovieView * view, GFxValue * fxDest, std
 
 namespace papyrusScaleform
 {
-	void SetBool(StaticFunctionTag* thisInput, BSFixedString target, bool value)
+	void SetBool(StaticFunctionTag* thisInput, BSFixedString menu, BSFixedString target, bool value)
 	{
-		if (! target.data)
+		if (!menu.data || !target.data)
 			return;
 
-		GFxMovieView * view = NULL;
+		GFxMovieView * view = GetMovieByName(menu.data);
 		GFxValue fxDest;
-		std::string dest, name;
 
+		std::string dest, name;
 		if (!PrepareSet(target.data, view, &fxDest, dest, name))
 			return;
 
@@ -153,15 +145,15 @@ namespace papyrusScaleform
 		fxDest.SetMember(name.c_str(), &fxValue);
 	}
 
-	void SetNumber(StaticFunctionTag* thisInput, BSFixedString target, float value)
+	void SetNumber(StaticFunctionTag* thisInput, BSFixedString menu, BSFixedString target, float value)
 	{
-		if (! target.data)
+		if (!menu.data || !target.data)
 			return;
 
-		GFxMovieView * view = NULL;
+		GFxMovieView * view = GetMovieByName(menu.data);
 		GFxValue fxDest;
-		std::string dest, name;
 
+		std::string dest, name;
 		if (!PrepareSet(target.data, view, &fxDest, dest, name))
 			return;
 
@@ -170,15 +162,15 @@ namespace papyrusScaleform
 		fxDest.SetMember(name.c_str(), &fxValue);
 	}
 
-	void SetString(StaticFunctionTag* thisInput, BSFixedString target, BSFixedString value)
+	void SetString(StaticFunctionTag* thisInput, BSFixedString menu, BSFixedString target, BSFixedString value)
 	{
-		if (! target.data)
+		if (!menu.data || !target.data)
 			return;
 
-		GFxMovieView * view = NULL;
+		GFxMovieView * view = GetMovieByName(menu.data);
 		GFxValue fxDest;
-		std::string dest, name;
 
+		std::string dest, name;
 		if (!PrepareSet(target.data, view, &fxDest, dest, name))
 			return;
 
@@ -187,15 +179,15 @@ namespace papyrusScaleform
 		fxDest.SetMember(name.c_str(), &fxValue);
 	}
 	
-	bool GetBool(StaticFunctionTag* thisInput, BSFixedString target)
+	bool GetBool(StaticFunctionTag* thisInput, BSFixedString menu, BSFixedString target)
 	{
-		if (! target.data)
+		if (!menu.data || !target.data)
 			return false;
 
-		GFxMovieView * view = NULL;
-		std::string dest, name;
+		GFxMovieView * view = GetMovieByName(menu.data);
 
-		if (! ExtractTargetData(target.data, view, dest, name, true))
+		std::string dest, name;
+		if (! ExtractTargetData(target.data, dest, name, true))
 			return false;
 
 		// TODO
@@ -210,15 +202,15 @@ namespace papyrusScaleform
 		return fxDest.GetBool();
 	}
 
-	float GetNumber(StaticFunctionTag* thisInput, BSFixedString target)
+	float GetNumber(StaticFunctionTag* thisInput, BSFixedString menu, BSFixedString target)
 	{
-		if (! target.data)
+		if (!menu.data || !target.data)
 			return 0;
 
-		GFxMovieView * view = NULL;
-		std::string dest, name;
+		GFxMovieView * view = GetMovieByName(menu.data);
 
-		if (! ExtractTargetData(target.data, view, dest, name, true))
+		std::string dest, name;
+		if (! ExtractTargetData(target.data, dest, name, true))
 			return 0;
 
 		// TODO
@@ -233,15 +225,15 @@ namespace papyrusScaleform
 		return fxDest.GetNumber();
 	}
 
-	BSFixedString GetString(StaticFunctionTag* thisInput, BSFixedString target)
+	BSFixedString GetString(StaticFunctionTag* thisInput, BSFixedString menu, BSFixedString target)
 	{
-		if (! target.data)
+		if (!menu.data || !target.data)
 			return NULL;
 
-		GFxMovieView * view = NULL;
-		std::string dest, name;
+		GFxMovieView * view = GetMovieByName(menu.data);
 
-		if (! ExtractTargetData(target.data, view, dest, name, true))
+		std::string dest, name;
+		if (! ExtractTargetData(target.data, dest, name, true))
 			return NULL;
 
 		// TODO
@@ -256,15 +248,15 @@ namespace papyrusScaleform
 		return fxDest.GetString();
 	}
 
-	void Invoke(StaticFunctionTag* thisInput, BSFixedString target)
+	void Invoke(StaticFunctionTag* thisInput, BSFixedString menu, BSFixedString target)
 	{
-		if (! target.data)
+		if (!menu.data || !target.data)
 			return;
 
-		GFxMovieView * view = NULL;
-		std::string dest, name;
+		GFxMovieView * view = GetMovieByName(menu.data);
 
-		if (! ExtractTargetData(target.data, view, dest, name, true))
+		std::string dest, name;
+		if (! ExtractTargetData(target.data, dest, name, true))
 			return;
 
 		// TODO
@@ -274,15 +266,15 @@ namespace papyrusScaleform
 		view->Invoke(name.c_str(), &result, &args, 0);
 	}
 
-	void InvokeBool(StaticFunctionTag* thisInput, BSFixedString target, bool arg)
+	void InvokeBool(StaticFunctionTag* thisInput, BSFixedString menu, BSFixedString target, bool arg)
 	{
-		if (! target.data)
+		if (!menu.data || !target.data)
 			return;
 
-		GFxMovieView * view = NULL;
-		std::string dest, name;
+		GFxMovieView * view = GetMovieByName(menu.data);
 
-		if (! ExtractTargetData(target.data, view, dest, name, true))
+		std::string dest, name;
+		if (! ExtractTargetData(target.data, dest, name, true))
 			return;
 
 		// TODO
@@ -293,15 +285,15 @@ namespace papyrusScaleform
 		view->Invoke(name.c_str(), &result, &args, 1);
 	}
 
-	void InvokeNumber(StaticFunctionTag* thisInput, BSFixedString target, float arg)
+	void InvokeNumber(StaticFunctionTag* thisInput, BSFixedString menu, BSFixedString target, float arg)
 	{
-		if (! target.data)
+		if (!menu.data || !target.data)
 			return;
 
-		GFxMovieView * view = NULL;
+		GFxMovieView * view = GetMovieByName(menu.data);
+		
 		std::string dest, name;
-
-		if (! ExtractTargetData(target.data, view, dest, name, true))
+		if (! ExtractTargetData(target.data, dest, name, true))
 			return;
 
 		// TODO
@@ -312,15 +304,15 @@ namespace papyrusScaleform
 		view->Invoke(name.c_str(), &result, &args, 1);
 	}
 
-	void InvokeString(StaticFunctionTag* thisInput, BSFixedString target, BSFixedString arg)
+	void InvokeString(StaticFunctionTag* thisInput, BSFixedString menu, BSFixedString target, BSFixedString arg)
 	{
-		if (! target.data)
+		if (!menu.data || !target.data)
 			return;
 
-		GFxMovieView * view = NULL;
-		std::string dest, name;
+		GFxMovieView * view = GetMovieByName(menu.data);
 
-		if (! ExtractTargetData(target.data, view, dest, name, true))
+		std::string dest, name;
+		if (! ExtractTargetData(target.data, dest, name, true))
 			return;
 
 		// TODO
@@ -331,36 +323,48 @@ namespace papyrusScaleform
 		view->Invoke(name.c_str(), &result, &args, 1);
 	}
 
+	bool IsMenuOpen(StaticFunctionTag* thisInput, BSFixedString menu)
+	{
+		if (! menu.data)
+			return false;
+
+		// TODO
+		return true;
+	}
+
 	void RegisterFuncs(VMClassRegistry* registry)
 	{
 		registry->RegisterFunction(
-			new NativeFunction2 <StaticFunctionTag, void, BSFixedString, bool> ("SetBool", "Scaleform", papyrusScaleform::SetBool, registry));
+			new NativeFunction3 <StaticFunctionTag, void, BSFixedString, BSFixedString, bool> ("SetBool", "Scaleform", papyrusScaleform::SetBool, registry));
 		
 		registry->RegisterFunction(
-			new NativeFunction2 <StaticFunctionTag, void, BSFixedString, float> ("SetNumber", "Scaleform", papyrusScaleform::SetNumber, registry));
+			new NativeFunction3 <StaticFunctionTag, void, BSFixedString, BSFixedString, float> ("SetNumber", "Scaleform", papyrusScaleform::SetNumber, registry));
 
 		registry->RegisterFunction(
-			new NativeFunction2 <StaticFunctionTag, void, BSFixedString, BSFixedString> ("SetString", "Scaleform", papyrusScaleform::SetString, registry));
+			new NativeFunction3 <StaticFunctionTag, void, BSFixedString, BSFixedString, BSFixedString> ("SetString", "Scaleform", papyrusScaleform::SetString, registry));
 
 		registry->RegisterFunction(
-			new NativeFunction1 <StaticFunctionTag, bool, BSFixedString> ("GetBool", "Scaleform", papyrusScaleform::GetBool, registry));
+			new NativeFunction2 <StaticFunctionTag, bool, BSFixedString, BSFixedString> ("GetBool", "Scaleform", papyrusScaleform::GetBool, registry));
 
 		registry->RegisterFunction(
-			new NativeFunction1 <StaticFunctionTag, float, BSFixedString> ("GetNumber", "Scaleform", papyrusScaleform::GetNumber, registry));
+			new NativeFunction2 <StaticFunctionTag, float, BSFixedString, BSFixedString> ("GetNumber", "Scaleform", papyrusScaleform::GetNumber, registry));
 
 		registry->RegisterFunction(
-			new NativeFunction1 <StaticFunctionTag, BSFixedString, BSFixedString> ("GetString", "Scaleform", papyrusScaleform::GetString, registry));
+			new NativeFunction2 <StaticFunctionTag, BSFixedString, BSFixedString, BSFixedString> ("GetString", "Scaleform", papyrusScaleform::GetString, registry));
 
 		registry->RegisterFunction(
-			new NativeFunction1 <StaticFunctionTag, void, BSFixedString> ("Invoke", "Scaleform", papyrusScaleform::Invoke, registry));
+			new NativeFunction2 <StaticFunctionTag, void, BSFixedString, BSFixedString> ("Invoke", "Scaleform", papyrusScaleform::Invoke, registry));
 
 		registry->RegisterFunction(
-			new NativeFunction2 <StaticFunctionTag, void, BSFixedString, bool> ("InvokeBool", "Scaleform", papyrusScaleform::InvokeBool, registry));
+			new NativeFunction3 <StaticFunctionTag, void, BSFixedString, BSFixedString, bool> ("InvokeBool", "Scaleform", papyrusScaleform::InvokeBool, registry));
 
 		registry->RegisterFunction(
-			new NativeFunction2 <StaticFunctionTag, void, BSFixedString, float> ("InvokeNumber", "Scaleform", papyrusScaleform::InvokeNumber, registry));
+			new NativeFunction3 <StaticFunctionTag, void, BSFixedString, BSFixedString, float> ("InvokeNumber", "Scaleform", papyrusScaleform::InvokeNumber, registry));
 
 		registry->RegisterFunction(
-			new NativeFunction2 <StaticFunctionTag, void, BSFixedString, BSFixedString> ("InvokeString", "Scaleform", papyrusScaleform::InvokeString, registry));
+			new NativeFunction3 <StaticFunctionTag, void, BSFixedString, BSFixedString, BSFixedString> ("InvokeString", "Scaleform", papyrusScaleform::InvokeString, registry));
+
+		registry->RegisterFunction(
+			new NativeFunction1 <StaticFunctionTag, bool, BSFixedString> ("IsMenuOpen", "Scaleform", papyrusScaleform::IsMenuOpen, registry));
 	}
 }
