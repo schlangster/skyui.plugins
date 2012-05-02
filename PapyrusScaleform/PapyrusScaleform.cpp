@@ -15,6 +15,15 @@
 class MenuManager
 {
 public:
+
+	struct Result
+	{
+		IMenu *		menu; // 00
+		UInt32		unk004; // 04
+
+		Result() : menu(0), unk004(0) {};
+	};
+	
 	// 0C
 	struct List
 	{
@@ -22,16 +31,16 @@ public:
 		int		unk078;		// 04
 		int		unk07C;		// 08
 		int		unk080;		// 0C
-		char	delim[8];	// 10 end of list?
+		char	delim[8];	// 10 end of list? hash?
 		void	* data;		// 18 - pointer to list data, passed to GetMenu
 
 		MEMBER_FN_PREFIX(List);
 
-		// sub_A32040 is always called before this 
-		DEFINE_MEMBER_FN(GetMenu, bool, 0x00A458C0, void * data, void * name1, void * name2, IMenu * pMenu);
+		// sub_A32040 is always called before this. CRC?
+		DEFINE_MEMBER_FN(GetMenu, bool, 0x00A458C0, void * data, void * name1, void * name2, Result * result);
 	};
 	
-	char		pad[74];
+	char		pad[0x74];
 	List		list;	// 074
 	int			* unk090;	// 090 - threadId?
 
