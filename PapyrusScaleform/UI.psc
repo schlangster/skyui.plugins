@@ -1,4 +1,4 @@
-Scriptname Scaleform Hidden
+Scriptname UI Hidden
 
 Function SetBool(string menu, string target, bool value) global native
 Function SetNumber(string menu, string target, float value) global native
@@ -13,4 +13,4 @@ Function InvokeBool(string menu, string target, bool arg) global native
 Function InvokeNumber(string menu, string target, float arg) global native
 Function InvokeString(string menu, string target, string arg) global native
 
-Function IsMenuOpen(string menu) global native
+bool Function IsMenuOpen(string menu) global native

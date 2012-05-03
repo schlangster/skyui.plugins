@@ -5,7 +5,7 @@
 struct StaticFunctionTag;
 class VMClassRegistry;
 
-namespace papyrusScaleform
+namespace papyrusUI
 {
 	void RegisterFuncs(VMClassRegistry* registry);
 
