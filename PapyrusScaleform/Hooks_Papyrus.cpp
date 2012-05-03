@@ -8,13 +8,18 @@
 #include "GameReferences.h"
 
 #include "PapyrusActor.h"
+#include "PapyrusActorBase.h"
 #include "PapyrusArmor.h"
+#include "PapyrusBook.h"
 #include "PapyrusCell.h"
 #include "PapyrusCombatStyle.h"
+#include "PapyrusConstructibleObject.h"
 #include "PapyrusEnchantment.h"
 #include "PapyrusForm.h"
+#include "PapyrusGame.h"
 #include "PapyrusIngredient.h"
 #include "PapyrusInput.h"
+#include "PapyrusKeyword.h"
 #include "PapyrusMath.h"
 #include "PapyrusMisc.h"
 #include "PapyrusObjectReference.h"
@@ -46,7 +51,7 @@ void RegisterPapyrusFunctions_Hook(VMClassRegistry ** registryPtr)
 	papyrusCell::RegisterFuncs(registry);
 
 	// TESObjectARMO
-	papyrusMath::RegisterFuncs(registry);
+	papyrusArmor::RegisterFuncs(registry);
 
 	// TESSoulGem
 	papyrusSoulGem::RegisterFuncs(registry);
@@ -72,6 +77,9 @@ void RegisterPapyrusFunctions_Hook(VMClassRegistry ** registryPtr)
 	// Actor
 	papyrusActor::RegisterFuncs(registry);
 
+	// ActorBase (TESNPC)
+	papyrusActorBase::RegisterFuncs(registry);
+
 	// Outfit
 	papyrusOutfit::RegisterFuncs(registry);
 
@@ -93,7 +101,16 @@ void RegisterPapyrusFunctions_Hook(VMClassRegistry ** registryPtr)
 	// Keyword
 	papyrusKeyword::RegisterFuncs(registry);
 
-	// Scaleform
+	// TESObjectBOOK
+	papyrusBook::RegisterFuncs(registry);
+
+	// ConstructibleObject
+	papyrusConstructibleObject::RegisterFuncs(registry);
+
+	// Game
+	papyrusGame::RegisterFuncs(registry);
+
+	// UI
 	papyrusUI::RegisterFuncs(registry);
 }
 
