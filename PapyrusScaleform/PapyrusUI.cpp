@@ -268,7 +268,7 @@ namespace papyrusUI
 
 		GFxValue fxResult;
 		if (! view->GetVariable(&fxResult, sourceStr.data))
-			return 0;
+			return NULL;
 
 		if (fxResult.GetType() != GFxValue::kType_String)
 			return NULL;
@@ -276,7 +276,7 @@ namespace papyrusUI
 		return fxResult.GetString();
 	}
 
-	// Not working
+	// Tested
 	void Invoke(StaticFunctionTag* thisInput, BSFixedString menuName, BSFixedString targetStr)
 	{
 		if (!menuName.data || !targetStr.data)
@@ -286,12 +286,18 @@ namespace papyrusUI
 		if (!view)
 			return;
 
-		GFxValue result, args;
-		view->CreateArray(&args);
-		view->Invoke(targetStr.data, &result, &args, 0);
+		std::string dest, name;
+		if (! ExtractTargetData(targetStr.data, dest, name))
+			return;
+
+		GFxValue fxDest;
+		if (! view->GetVariable(&fxDest, dest.c_str()))
+			return;
+
+		fxDest.Invoke(name.c_str(), NULL, NULL, 0);
 	}
 
-	// Not working
+	// Tested
 	void InvokeBool(StaticFunctionTag* thisInput, BSFixedString menuName, BSFixedString targetStr, bool arg)
 	{
 		if (!menuName.data || !targetStr.data)
@@ -301,12 +307,21 @@ namespace papyrusUI
 		if (!view)
 			return;
 
-		GFxValue result, args;
-		view->CreateArray(&args);
-		view->Invoke(targetStr.data, &result, &args, 0);
+		std::string dest, name;
+		if (! ExtractTargetData(targetStr.data, dest, name))
+			return;
+
+		GFxValue fxDest;
+		if (! view->GetVariable(&fxDest, dest.c_str()))
+			return;
+
+		GFxValue args;
+		args.SetBool(arg);
+		fxDest.Invoke(name.c_str(), NULL, &args, 1);
+		
 	}
 
-	// Not working
+	// Tested
 	void InvokeNumber(StaticFunctionTag* thisInput, BSFixedString menuName, BSFixedString targetStr, float arg)
 	{
 		if (!menuName.data || !targetStr.data)
@@ -316,12 +331,20 @@ namespace papyrusUI
 		if (!view)
 			return;
 
-		GFxValue result, args;
-		view->CreateArray(&args);
-		view->Invoke(targetStr.data, &result, &args, 0);
+		std::string dest, name;
+		if (! ExtractTargetData(targetStr.data, dest, name))
+			return;
+
+		GFxValue fxDest;
+		if (! view->GetVariable(&fxDest, dest.c_str()))
+			return;
+
+		GFxValue args;
+		args.SetNumber(arg);
+		fxDest.Invoke(name.c_str(), NULL, &args, 1);
 	}
 
-	// Not working
+	// Tested
 	void InvokeString(StaticFunctionTag* thisInput, BSFixedString menuName, BSFixedString targetStr, BSFixedString arg)
 	{
 		if (!menuName.data || !targetStr.data || !arg.data)
@@ -331,9 +354,17 @@ namespace papyrusUI
 		if (!view)
 			return;
 
-		GFxValue result, args;
-		view->CreateArray(&args);
-		view->Invoke(targetStr.data, &result, &args, 0);
+		std::string dest, name;
+		if (! ExtractTargetData(targetStr.data, dest, name))
+			return;
+
+		GFxValue fxDest;
+		if (! view->GetVariable(&fxDest, dest.c_str()))
+			return;
+
+		GFxValue args;
+		view->CreateString(&args, arg.data);
+		fxDest.Invoke(name.c_str(), NULL, &args, 1);
 	}
 
 	// Tested
