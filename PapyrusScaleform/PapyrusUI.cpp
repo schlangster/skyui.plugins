@@ -147,7 +147,7 @@ bool PrepareSet(const char * target, GFxMovieView * view, GFxValue * fxDest, std
 		return true;
 
 	// Dest has to be created first
-	if (CreateObjectRoot(view, dest.c_str()))
+	if (!CreateObjectRoot(view, dest.c_str()))
 		return false;
 
 	// Try again now
