@@ -11,65 +11,193 @@
 #include "Utilities.h"
 
 
+typedef void (__cdecl * _CalcCRC32)(UInt32 * out, UInt32 data);
+const _CalcCRC32 CalcCRC32 = (_CalcCRC32)0x00A32040;
+
+
+// 01C
+template<class Item>
+class tHashTable
+{
+	typedef Item tItem;
+
+	struct _Entry
+	{
+			tItem	item;
+			_Entry	* next;
+	};
+
+private:
+	UInt32		unk_000;	// 000
+	UInt32		size;		// 004 (= 0)	dbg 0x20
+	UInt32		unk_008;	// 008 (= 0)	dbg 1
+	UInt32		unk_00C;	// 00C (= 0)	dbg 7
+	_Entry		* eolPtr;	// 010 (= 0EFBEADDE)
+	UInt32		unk_014;	// 014
+	_Entry		* entries;	// 018
+
+public:
+	template <class CompareType>
+	bool Lookup(CompareType cmpVal, tItem ** itemPtr) const
+	{
+		if (!entries)
+			return false;
+
+		UInt32 crc;
+		CalcCRC32(&crc, (UInt32) cmpVal);
+
+		_Entry * pEntry = (_Entry*) (((UInt32) entries) + 0x10 * (crc & (size - 1)));
+
+		if (! pEntry->next)
+			return false;
+
+		while (! pEntry->item.Matches(cmpVal))
+		{
+			pEntry = pEntry->next;
+			if (pEntry == eolPtr)
+				return false;
+		}
+
+		*itemPtr = &pEntry->item;
+
+		return true;
+	}
+};
+STATIC_ASSERT(sizeof(tHashTable<void*>) == 0x1C);
+
+
+// 00C
+class MenuTableItem
+{
+public:
+	const char	* name;				// 000
+	IMenu		* menuInstance;		// 004	0 if the menu is not currently open
+	void		* menuConstructor;	// 008
+
+	bool Matches(const char * a_name) const
+	{
+		return name == a_name;
+	}
+};
+
+typedef tHashTable<MenuTableItem> MenuTable;
+
+
+// 008
+class HandleTableItem
+{
+public:
+	UInt64		handle;		// 000
+
+	bool Matches(UInt64 * a_handle) const
+	{
+		return handle == *a_handle;
+	}
+};
+
+typedef tHashTable<HandleTableItem> HandleTable;
+
+
 // sub_A454D0 - ctor
 class MenuManager
 {
-	struct Result
+	// 00C
+	struct Unknown2
 	{
-		IMenu *		menu; // 00
-		UInt32		unk004; // 04
-		Result() : menu(0), unk004(0) {};
+		void		* unk_000;	// 000 (= 0) dbg: ptr to something that contains event sinks
+		UInt32		unk_004;	// 004 (= 0) dbg: 4, 4, 8 ..
+		UInt32		unk_008;	// 004 (= 0) dbg: 4, 4, 1 ..
 	};
+	STATIC_ASSERT(sizeof(Unknown2) == 0x0C);
 
-	struct List
+	// 030
+	struct Unknown1
 	{
-		UInt32		unk074;		// 00
-		UInt32		unk078;		// 04
-		UInt32		unk07C;		// 08
-		UInt32		unk080;		// 0C
-		char		hash[8];	// 10 end of list? hash?
-		UInt32		* data;		// 18 - pointer to list data, passed to GetMenu
+		UInt32		unk_000;	// 000 (= 0)
+		UInt32		unk_004;	// 004 (= 0)
 
-		MEMBER_FN_PREFIX(List);
-		DEFINE_MEMBER_FN(GetMenu, bool, 0x00A458C0, void * arg1, BSFixedString * arg2, BSFixedString * arg3, Result * arg4);
+		Unknown2	unk_008;	// 008
+		Unknown2	unk_014;	// 014
+		Unknown2	unk_020;	// 020
+
+		UInt32		unk_02C;	// 02C (= 0)
 	};
+	STATIC_ASSERT(sizeof(Unknown1) == 0x30);
+
+	// 030
+	struct Unknown3
+	{
+		UInt32		freqLow;	// 000 (= Frequency.LowPart)
+		UInt32		freqHigh;	// 004 (= Frequency.HighPart)
+
+		UInt32		unk_008;	// 008 (= 0)
+		UInt32		unk_00C;	// 00C (= 0)
+		UInt32		unk_010;	// 010 (= 0)
+		UInt32		unk_014;	// 014 (= 0)
+		UInt32		unk_018;	// 018 (= 0)
+		UInt32		unk_01C;	// 018 (= frequency related)
+		
+		UInt32		unk_020;	// 020
+		UInt32		unk_024;	// 024
+
+		UInt32		unk_028;	// 028 (= 0)
+		UInt32		unk_02C;	// 02C (= 0)
+	};
+	STATIC_ASSERT(sizeof(Unknown3) == 0x30);
+
+private:
+
+	UInt32		unk_000;	// 000
+	Unknown1	unk_004;	// 004
+	Unknown1	unk_034;	// 034
+	Unknown2	unk_064;	// 064
+	UInt32		unk_070;	// 070
+	MenuTable	menuTable;	// 074
+	UInt32		unk_090;	// 090 (= 0)	threadId
+	UInt32		unk_094;	// 094 (= 0)
+	UInt32		unk_098;	// 098 (= 0)
+	UInt32		unk_09C;	// 09C (= 0)
+	UInt32		unk_0A0;	// 0A0 (= 0)
+	UInt32		unk_0A4;	// 0A4 (= 0)
+	UInt32		unk_0A8;	// 0A8 (= 0)
+	UInt32		unk_0AC;	// 0AC
+	Unknown3	unk_0B0;
+	bool		unk_0E0;	// 0E0 (= 0)	dbg: 1
+	bool		unk_0E1;	// 0E1 (= 0)
+	char		pad[2];
 
 public:
-	char		pad[0x74];
-	List		list;			// 074
-	UInt32		* unk090;		// 090 - threadId?
 
-	MEMBER_FN_PREFIX(MenuManager);
-	DEFINE_MEMBER_FN(IsMenuOpen, bool, 0x00A447B0, BSFixedString * menuName);
-	//DEFINE_MEMBER_FN(Register, void, 0x00A44A70, const char * name, void * func);
-
-	static MenuManager *	GetSingleton(void)
+	static MenuManager * GetSingleton(void)
 	{
 		return *((MenuManager **)0x012B8A98);
 	}
 
-	GFxMovieView *	GetMovieView(BSFixedString * menuName)
+	GFxMovieView * GetMovieView(BSFixedString * menuName)
 	{
-		BSFixedString * magic = menuName;
-		Result result;
+		MenuTableItem * itemPtr = NULL;
 
-		typedef void * (__cdecl * _GetHash)(BSFixedString ** arg1, const char * arg2);
-		((_GetHash)0x00A32040)(&magic, magic->data);
+		if (! menuTable.Lookup<const char *>(menuName->data, &itemPtr))
+			return NULL;
 
-		CALL_MEMBER_FN(&list, GetMenu)(list.data, magic, menuName, &result);
-		IMenu * menu = result.menu;
-
+		IMenu * menu = itemPtr->menuInstance;
 		if (!menu)
 			return NULL;
 
+		// Necessary?
+		menu->AddRef();
 		GFxMovieView * view = menu->view;
-
-		// If this is not called, menumode goes on forever
-		CALL_MEMBER_FN(menu, Unknown1)();
+		menu->Release();
 
 		return view;
 	}
+
+	MEMBER_FN_PREFIX(MenuManager);
+	DEFINE_MEMBER_FN(IsMenuOpen, bool, 0x00A447B0, BSFixedString * menuName);
+	DEFINE_MEMBER_FN(Register, void, 0x00A44A70, const char * name, void * ctorFunc);
 };
+STATIC_ASSERT(sizeof(MenuManager) == 0xE4);
+
 
 GFxMovieView * GetMovieView(const char * menuName)
 {
