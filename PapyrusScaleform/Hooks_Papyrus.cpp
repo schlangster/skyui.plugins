@@ -114,6 +114,32 @@ void RegisterPapyrusFunctions_Hook(VMClassRegistry ** registryPtr)
 	papyrusUI::RegisterFuncs(registry);
 }
 
+class SaveLoadManager
+{
+public:
+	MEMBER_FN_PREFIX(SaveLoadManager);
+	DEFINE_MEMBER_FN(SaveGame_Internal, void, 0x00672460, const char * fileName);
+	DEFINE_MEMBER_FN(LoadGame_Internal, void, 0x006748A0, const char * fileName, bool unk1);
+
+	void SaveGame_Hook(const char * fileName)
+	{
+		_MESSAGE("Executing SaveLoadManager::SaveGame_Hook. Filename: %s", fileName);
+
+		CALL_MEMBER_FN(this, SaveGame_Internal)(fileName);
+
+		_MESSAGE("Executed SaveLoadManager::SaveGame_Hook. Filename: %s", fileName);
+	}
+
+	void LoadGame_Hook(const char * fileName, bool unk1)
+	{
+		_MESSAGE("Executing SaveLoadManager::LoadGame_Hook. Filename: %s", fileName);
+
+		CALL_MEMBER_FN(this, LoadGame_Internal)(fileName, unk1);
+
+		_MESSAGE("Executed SaveLoadManager::LoadGame_Hook. Filename: %s", fileName);
+	}
+};
+
 void Hooks_Papyrus_Init(void)
 {
 	//
@@ -122,4 +148,14 @@ void Hooks_Papyrus_Init(void)
 void Hooks_Papyrus_Commit(void)
 {
 	WriteRelCall(0x008C3A71, (UInt32)RegisterPapyrusFunctions_Hook);
+
+	// Event registration lifecycle
+	WriteRelCall(0x008C1CBA, GetFnAddr(&SkyrimVM::OnFormDelete_Hook));
+	WriteRelCall(0x008C20E7, GetFnAddr(&SkyrimVM::RevertGlobalData_Hook));
+	WriteRelCall(0x008BEE51, GetFnAddr(&SkyrimVM::SaveGlobalData_Hook));
+	WriteRelCall(0x008C22B9, GetFnAddr(&SkyrimVM::LoadGlobalData_Hook));
+	
+	// Load & save
+	WriteRelCall(0x0067A5D2, GetFnAddr(&SaveLoadManager::SaveGame_Hook));
+	WriteRelCall(0x0067AF15, GetFnAddr(&SaveLoadManager::LoadGame_Hook));
 }

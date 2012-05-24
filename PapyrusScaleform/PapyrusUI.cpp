@@ -7,87 +7,68 @@
 #include "ScaleformMovie.h"
 
 #include "GameMenus.h"
+#include "GameTypes.h"
 
 #include "Utilities.h"
-
-
-typedef void (__cdecl * _CalcCRC32)(UInt32 * out, UInt32 data);
-const _CalcCRC32 CalcCRC32 = (_CalcCRC32)0x00A32040;
-
-
-// 01C
-template<class Item>
-class tHashTable
-{
-	typedef Item tItem;
-
-	struct _Entry
-	{
-			tItem	item;
-			_Entry	* next;
-	};
-
-private:
-	UInt32		unk_000;	// 000
-	UInt32		size;		// 004 (= 0)	dbg 0x20
-	UInt32		unk_008;	// 008 (= 0)	dbg 1
-	UInt32		unk_00C;	// 00C (= 0)	dbg 7
-	_Entry		* eolPtr;	// 010 (= 0EFBEADDE)
-	UInt32		unk_014;	// 014
-	_Entry		* entries;	// 018
-
-public:
-	template <class CompareType>
-	bool Lookup(CompareType cmpVal, tItem ** itemPtr) const
-	{
-		if (!entries)
-			return false;
-
-		UInt32 crc;
-		CalcCRC32(&crc, (UInt32) cmpVal);
-
-		_Entry * pEntry = (_Entry*) (((UInt32) entries) + 0x10 * (crc & (size - 1)));
-
-		if (! pEntry->next)
-			return false;
-
-		while (! pEntry->item.Matches(cmpVal))
-		{
-			pEntry = pEntry->next;
-			if (pEntry == eolPtr)
-				return false;
-		}
-
-		*itemPtr = &pEntry->item;
-
-		return true;
-	}
-};
-STATIC_ASSERT(sizeof(tHashTable<void*>) == 0x1C);
 
 
 // 00C
 class MenuTableItem
 {
 public:
+
 	const char	* name;				// 000
 	IMenu		* menuInstance;		// 004	0 if the menu is not currently open
 	void		* menuConstructor;	// 008
+
+	static UInt32 CalcHash(const char * a_name)
+	{
+		UInt32 hash;
+		CRC32_4(&hash, (UInt32) a_name);
+		return hash;
+	}
 
 	bool Matches(const char * a_name) const
 	{
 		return name == a_name;
 	}
+
+	UInt32 GetHash() const
+	{
+		UInt32 hash;
+		CRC32_4(&hash, (UInt32) name);
+		return hash;
+	}
 };
 
-typedef tHashTable<MenuTableItem> MenuTable;
+typedef tHashSet<MenuTableItem> MenuTable;
 
 
-// 008
+// 008 (=> _Entry 010 (8 item + 4 next + 4 pad)
 class HandleTableItem
 {
 public:
+
 	UInt64		handle;		// 000
+
+	static UInt32 CalcHash(UInt64 * a_handle)
+	{
+		UInt32 hash;
+		CRC32_8(&hash, (UInt64) a_handle);
+		return hash;
+	}
+
+	UInt32 GetHash() const
+	{
+		UInt32 hash;
+		CRC32_8(&hash, handle);
+		return hash;
+	}
+
+	bool Equals(HandleTableItem * item) const
+	{
+		return item->handle == handle;
+	}
 
 	bool Matches(UInt64 * a_handle) const
 	{
@@ -95,30 +76,22 @@ public:
 	}
 };
 
-typedef tHashTable<HandleTableItem> HandleTable;
+typedef tHashSet<HandleTableItem> HandleTable;
+
 
 
 // sub_A454D0 - ctor
 class MenuManager
 {
-	// 00C
-	struct Unknown2
-	{
-		void		* unk_000;	// 000 (= 0) dbg: ptr to something that contains event sinks
-		UInt32		unk_004;	// 004 (= 0) dbg: 4, 4, 8 ..
-		UInt32		unk_008;	// 004 (= 0) dbg: 4, 4, 1 ..
-	};
-	STATIC_ASSERT(sizeof(Unknown2) == 0x0C);
-
 	// 030
 	struct Unknown1
 	{
 		UInt32		unk_000;	// 000 (= 0)
 		UInt32		unk_004;	// 004 (= 0)
 
-		Unknown2	unk_008;	// 008
-		Unknown2	unk_014;	// 014
-		Unknown2	unk_020;	// 020
+		UnkArray	unk_008;	// 008
+		UnkArray	unk_014;	// 014
+		UnkArray	unk_020;	// 020
 
 		UInt32		unk_02C;	// 02C (= 0)
 	};
@@ -150,13 +123,13 @@ private:
 	UInt32		unk_000;	// 000
 	Unknown1	unk_004;	// 004
 	Unknown1	unk_034;	// 034
-	Unknown2	unk_064;	// 064
-	UInt32		unk_070;	// 070
-	MenuTable	menuTable;	// 074
-	UInt32		unk_090;	// 090 (= 0)	threadId
-	UInt32		unk_094;	// 094 (= 0)
-	UInt32		unk_098;	// 098 (= 0)
-	UInt32		unk_09C;	// 09C (= 0)
+	UnkArray	unk_064;	// 064
+	UInt32			unk_070;	// 070
+	MenuTable		menuTable;	// 074
+	UInt32			unk_090;	// 090 (= 0)	threadId
+	UInt32			unk_094;	// 094 (= 0)
+	UInt32			unk_098;	// 098 (= 0)
+	UInt32			unk_09C;	// 09C (= 0)
 	UInt32		unk_0A0;	// 0A0 (= 0)
 	UInt32		unk_0A4;	// 0A4 (= 0)
 	UInt32		unk_0A8;	// 0A8 (= 0)
@@ -175,12 +148,11 @@ public:
 
 	GFxMovieView * GetMovieView(BSFixedString * menuName)
 	{
-		MenuTableItem * itemPtr = NULL;
-
-		if (! menuTable.Lookup<const char *>(menuName->data, &itemPtr))
+		MenuTableItem * item = menuTable.Find<const char *>(menuName->data);
+		if (!item)
 			return NULL;
 
-		IMenu * menu = itemPtr->menuInstance;
+		IMenu * menu = item->menuInstance;
 		if (!menu)
 			return NULL;
 
@@ -243,25 +215,24 @@ bool CreateObjectRoot(GFxMovieView * view, const char * dest)
 		curDest.append(".");
 		curDest.append(s);
 	}
+
+	return true;
 }
 
 bool ExtractTargetData(const char * target, std::string & dest, std::string & name)
 {
 	// target format: [_global|_root].d.e.s.t.ValueName
-	UInt32 lastDelim = 0;
+	
 	std::string t(target);
-
-	// Try to forward to last delim (if there even are any)
-	for (UInt32 i=0; target[i]; i++)
-		if (target[i] == '.')
-			lastDelim = i;
+	UInt32 lastDelim = t.rfind('.');
 
 	// Need at least 1 delim
-	if (lastDelim == 0)
+	if (lastDelim == std::string::npos)
 		return false;
 
 	dest = t.substr(0, lastDelim);
 	name = t.substr(lastDelim+1);
+
 	return true;
 }
 
@@ -284,7 +255,6 @@ bool PrepareSet(const char * target, GFxMovieView * view, GFxValue * fxDest, std
 
 namespace papyrusUI
 {
-	// Tested
 	void SetBool(StaticFunctionTag* thisInput, BSFixedString menuName, BSFixedString targetStr, bool value)
 	{
 		if (!menuName.data || !targetStr.data)
@@ -304,7 +274,6 @@ namespace papyrusUI
 		fxDest.SetMember(valueName.c_str(), &fxValue);
 	}
 
-	// Tested
 	void SetNumber(StaticFunctionTag* thisInput, BSFixedString menuName, BSFixedString targetStr, float value)
 	{
 		if (!menuName.data || !targetStr.data)
@@ -324,7 +293,6 @@ namespace papyrusUI
 		fxDest.SetMember(valueName.c_str(), &fxValue);
 	}
 
-	// Tested
 	void SetString(StaticFunctionTag* thisInput, BSFixedString menuName, BSFixedString targetStr, BSFixedString value)
 	{
 		if (!menuName.data || !targetStr.data)
@@ -344,7 +312,6 @@ namespace papyrusUI
 		fxDest.SetMember(name.c_str(), &fxValue);
 	}
 	
-	// Tested
 	bool GetBool(StaticFunctionTag* thisInput, BSFixedString menuName, BSFixedString sourceStr)
 	{
 		if (!menuName.data || !sourceStr.data)
@@ -364,7 +331,6 @@ namespace papyrusUI
 		return fxResult.GetBool();
 	}
 
-	// Tested
 	float GetNumber(StaticFunctionTag* thisInput, BSFixedString menuName, BSFixedString sourceStr)
 	{
 		if (!menuName.data || !sourceStr.data)
@@ -384,7 +350,6 @@ namespace papyrusUI
 		return fxResult.GetNumber();
 	}
 
-	// Tested
 	BSFixedString GetString(StaticFunctionTag* thisInput, BSFixedString menuName, BSFixedString sourceStr)
 	{
 		if (!menuName.data || !sourceStr.data)
@@ -404,7 +369,6 @@ namespace papyrusUI
 		return fxResult.GetString();
 	}
 
-	// Tested
 	void Invoke(StaticFunctionTag* thisInput, BSFixedString menuName, BSFixedString targetStr)
 	{
 		if (!menuName.data || !targetStr.data)
@@ -425,7 +389,6 @@ namespace papyrusUI
 		fxDest.Invoke(name.c_str(), NULL, NULL, 0);
 	}
 
-	// Tested
 	void InvokeBool(StaticFunctionTag* thisInput, BSFixedString menuName, BSFixedString targetStr, bool arg)
 	{
 		if (!menuName.data || !targetStr.data)
@@ -449,7 +412,6 @@ namespace papyrusUI
 		
 	}
 
-	// Tested
 	void InvokeNumber(StaticFunctionTag* thisInput, BSFixedString menuName, BSFixedString targetStr, float arg)
 	{
 		if (!menuName.data || !targetStr.data)
@@ -472,7 +434,6 @@ namespace papyrusUI
 		fxDest.Invoke(name.c_str(), NULL, &args, 1);
 	}
 
-	// Tested
 	void InvokeString(StaticFunctionTag* thisInput, BSFixedString menuName, BSFixedString targetStr, BSFixedString arg)
 	{
 		if (!menuName.data || !targetStr.data || !arg.data)
@@ -495,7 +456,6 @@ namespace papyrusUI
 		fxDest.Invoke(name.c_str(), NULL, &args, 1);
 	}
 
-	// Tested
 	bool IsMenuOpen(StaticFunctionTag* thisInput, BSFixedString menuName)
 	{
 		if (! menuName.data)
