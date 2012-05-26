@@ -52,9 +52,8 @@ public:
 
 //	void	** _vtbl;	// 00
 
-
 	MEMBER_FN_PREFIX(ObjectBindPolicy);
-	DEFINE_MEMBER_FN(BindObject, void, 0x00C11410, VMIdentifier ** identifier, UInt64 handle);
+	DEFINE_MEMBER_FN(BindObject, void, 0x00C249B0, VMIdentifier ** identifier, UInt64 handle);
 };
 
 // 10
@@ -70,7 +69,7 @@ public:
 	void	Release(void);
 
 	MEMBER_FN_PREFIX(VMClassInfo);
-	DEFINE_MEMBER_FN(Destroy, void, 0x00C1A640);
+	DEFINE_MEMBER_FN(Destroy, void, 0x00C2DAE0);
 };
 
 // 4B04
@@ -80,6 +79,8 @@ class VMClassRegistry
 public:
 	VMClassRegistry();
 	virtual ~VMClassRegistry();
+
+	// ### indices are from 1.5.26
 
 	virtual void	Unk_01(void);
 	virtual void	Unk_02(void);
@@ -98,6 +99,7 @@ public:
 	virtual void	Unk_0F(void);
 	virtual void	Unk_10(void);
 	virtual void	Unk_11(void);
+	virtual void	Unk_NewIn16_11(void);	// added in 1.6.86
 	virtual void	Unk_12(void);
 	virtual bool	Unk_13(StringCache::Ref * className, VMIdentifier ** identifier);
 	virtual void	Unk_14(void);
@@ -151,24 +153,18 @@ public:
 
 //	void	** _vtbl;	// 0000
 
-	UInt32	pad0004[(0x00FC - 0x0004) >> 2];	// 0004
+	UInt32	pad0004[(0x0100 - 0x0004) >> 2];	// 0004
 
-	VMClassRegistry	* m_classRegistry;	// 00FC
+	VMClassRegistry	* m_classRegistry;	// 0100
 
 	VMClassRegistry	* GetClassRegistry(void)	{ return m_classRegistry; }
 
-
 	MEMBER_FN_PREFIX(SkyrimVM);
-	DEFINE_MEMBER_FN(UnregisterForSleep_Internal, void, 0x008C0240, UInt64 handle);
-	DEFINE_MEMBER_FN(SaveRegSleepEventHandles_Internal, bool, 0x008B8EF0, void * saveFileHandle, void * saveStorageWrapper);
-	DEFINE_MEMBER_FN(RevertGlobalData_Internal, bool, 0x008C1530);
-	DEFINE_MEMBER_FN(LoadRegSleepEventHandles_Internal, bool, 0x008BF3B0, void * saveFileHandle, void * saveStorageWrapper);
+	DEFINE_MEMBER_FN(UnregisterForSleep_Internal, void, 0x008CE390, UInt64 handle);
+	DEFINE_MEMBER_FN(RevertGlobalData_Internal, bool, 0x008CF680);
 
 	void OnFormDelete_Hook(UInt64 handle);
-	bool SaveGlobalData_Hook(void * saveFileHandle, void * saveStorageWrapper);
 	void RevertGlobalData_Hook(void);
-	bool LoadGlobalData_Hook(void * saveFileHandle, void * saveStorageWrapper);
-	
 };
 
 extern SkyrimVM	** g_skyrimVM;
@@ -202,7 +198,7 @@ public:
 	void	Destroy(void);
 
 	MEMBER_FN_PREFIX(VMIdentifier);
-	DEFINE_MEMBER_FN(Destroy_Internal, void, 0x00C16740);
+	DEFINE_MEMBER_FN(Destroy_Internal, void, 0x00C29A00);
 };
 
 // 08
@@ -257,8 +253,8 @@ public:
 	} data;			// 04
 
 	MEMBER_FN_PREFIX(VMValue);
-	DEFINE_MEMBER_FN(Set, void, 0x00C181E0, VMValue * src);
-	DEFINE_MEMBER_FN(Destroy, void, 0x00C180E0);
+	DEFINE_MEMBER_FN(Set, void, 0x00C2B5F0, VMValue * src);
+	DEFINE_MEMBER_FN(Destroy, void, 0x00C2B4F0);
 
 	void	SetNone(void)
 	{
@@ -346,7 +342,7 @@ public:
 		VMValue	* Get(UInt32 idx)	{ return (idx < m_size) ? &m_data[idx] : NULL; }
 
 		MEMBER_FN_PREFIX(Output);
-		DEFINE_MEMBER_FN(Resize, bool, 0x008AE3A0, UInt32 len);
+		DEFINE_MEMBER_FN(Resize, bool, 0x008BBFA0, UInt32 len);
 	};
 
 	virtual bool	Copy(Output * dst) = 0;

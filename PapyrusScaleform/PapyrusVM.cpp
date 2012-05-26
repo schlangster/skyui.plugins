@@ -1,8 +1,9 @@
 #include "PapyrusVM.h"
 #include "GameAPI.h"
 
-IObjectHandlePolicy	** g_objectHandlePolicy = (IObjectHandlePolicy **)0x013FB538;
-SkyrimVM			** g_skyrimVM = (SkyrimVM **)0x012BABA8;
+IObjectHandlePolicy	** g_objectHandlePolicy = (IObjectHandlePolicy **)0x0141CA38;
+SkyrimVM			** g_skyrimVM = (SkyrimVM **)0x012DAF1C;
+
 
 void SkyrimVM::OnFormDelete_Hook(UInt64 handle)
 {
@@ -10,18 +11,7 @@ void SkyrimVM::OnFormDelete_Hook(UInt64 handle)
 
 	// TODO
 
-	_MESSAGE("Executed SkyrimVM::OnFormDelete_Hook.");
-}
-
-bool SkyrimVM::SaveGlobalData_Hook(void * saveFileHandle, void * saveStorageWrapper)
-{
-	bool result = CALL_MEMBER_FN(this, SaveRegSleepEventHandles_Internal)(saveFileHandle, saveStorageWrapper);
-
-	// TODO
-
-	_MESSAGE("Executed SkyrimVM::SaveGlobalData_Hook.");
-
-	return result;
+	// _MESSAGE("Executed SkyrimVM::OnFormDelete_Hook.");
 }
 
 void SkyrimVM::RevertGlobalData_Hook(void)
@@ -30,20 +20,8 @@ void SkyrimVM::RevertGlobalData_Hook(void)
 
 	// TODO
 
-	_MESSAGE("Executed SkyrimVM::RevertGlobalData_Hook.");
+	// _MESSAGE("Executed SkyrimVM::RevertGlobalData_Hook.");
 }
-
-bool SkyrimVM::LoadGlobalData_Hook(void * saveFileHandle, void * saveStorageWrapper)
-{
-	bool result = CALL_MEMBER_FN(this, LoadRegSleepEventHandles_Internal)(saveFileHandle, saveStorageWrapper);
-
-	// TODO
-
-	_MESSAGE("Executed SkyrimVM::LoadGlobalData_Hook.");
-
-	return result;
-}
-
 
 
 void VMClassInfo::AddRef(void)

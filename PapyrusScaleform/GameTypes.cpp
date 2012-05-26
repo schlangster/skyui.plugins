@@ -1,14 +1,10 @@
 #include "GameTypes.h"
 
-const _CRC32_4 CRC32_4 = (_CRC32_4)0x00A32040;
-const _CRC32_8 CRC32_8 = (_CRC32_8)0x00A320A0;
-
-
 StringCache * StringCache::GetSingleton(void)
 {
 	typedef StringCache * (* _GetSingleton)(void);
 
-	return ((_GetSingleton)0x00A385D0)();
+	return ((_GetSingleton)0x00A48EB0)();
 }
 
 StringCache::Lock * StringCache::GetLock(UInt32 crc16)
@@ -26,3 +22,5 @@ const char * BSString::Get(void)
 	return m_data ? m_data : "";
 }
 
+const _CRC32_Calc4 CRC32_Calc4 = (_CRC32_Calc4)0x00A428C0;
+const _CRC32_Calc8 CRC32_Calc8 = (_CRC32_Calc8)0x00A42920;

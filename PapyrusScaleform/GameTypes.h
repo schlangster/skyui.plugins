@@ -38,12 +38,15 @@ public:
 		const char	* data;
 
 		MEMBER_FN_PREFIX(Ref);
-		DEFINE_MEMBER_FN(ctor, Ref *, 0x00A38C90, const char * buf);
-		DEFINE_MEMBER_FN(Set, Ref *, 0x00A38CE0, const char * buf);
-		DEFINE_MEMBER_FN(Release, void, 0x00A38C80);
+		DEFINE_MEMBER_FN(ctor, Ref *, 0x00A49570, const char * buf);
+		DEFINE_MEMBER_FN(Set, Ref *, 0x00A495C0, const char * buf);
+		DEFINE_MEMBER_FN(Release, void, 0x00A49560);
 
 		Ref() :data(NULL) { }
 		Ref(const char * buf);
+
+		bool operator==(const Ref& lhs) const { return data == lhs.data; }
+		bool operator<(const Ref& lhs) const { return data < lhs.data; }
 	};
 
 	struct Lock
@@ -435,29 +438,27 @@ public:
 STATIC_ASSERT(sizeof(tList<void *>) == 0x8);
 
 
+typedef void (__cdecl * _CRC32_Calc4)(UInt32 * out, UInt32 data);
+extern const _CRC32_Calc4 CRC32_Calc4;
 
-typedef void (__cdecl * _CRC32_4)(UInt32 * out, UInt32 data);
-extern const _CRC32_4 CRC32_4;
-
-typedef void (__cdecl * _CRC32_8)(UInt32 * out, UInt64 data);
-extern const _CRC32_8 CRC32_8;
+typedef void (__cdecl * _CRC32_Calc8)(UInt32 * out, UInt64 data);
+extern const _CRC32_Calc8 CRC32_Calc8;
 
 
 // 01C
-template <class Item>
+template <typename Item>
 class tHashSet
 {
-	typedef Item tItem;
-
 	struct _Entry
 	{
-		_Entry() : next(NULL) {}
-
-		tItem	item;
+		Item	item;
 		_Entry	* next;
+
+		bool		IsFree() const	{ return next == NULL; }
+		void		Free()			{ next = NULL; }
 	};
 
-private:
+	static _Entry sentinel;
 
 	UInt32		unk_000;		// 000
 	UInt32		m_size;			// 004
@@ -466,6 +467,7 @@ private:
 	_Entry		* m_eolPtr;		// 010
 	UInt32		unk_014;		// 014
 	_Entry		* m_entries;	// 018
+
 
 	_Entry * GetEntry(UInt32 hash) const
 	{
@@ -484,7 +486,7 @@ private:
 			m_freeOffset = (m_size - 1) & (m_freeOffset - 1);
 			_Entry * entry = (_Entry*) (((UInt32) m_entries) + sizeof(_Entry) * m_freeOffset);
 
-			if (!entry->next)
+			if (entry->IsFree())
 				result = entry;
 		}
 		while (!result);
@@ -493,7 +495,7 @@ private:
 		return result;
 	}
 
-	bool Insert(tItem * item)
+	bool Insert(Item * item)
 	{
 		if (! m_entries)
 			return false;
@@ -521,7 +523,7 @@ private:
 				return true;
 			p = p->next;
 		}
-		while (p->next != m_eolPtr);
+		while (p != m_eolPtr);
 
 		// -- Either hash collision or bucket overlap
 
@@ -538,6 +540,7 @@ private:
 			freeEntry->item = *item;
 			freeEntry->next = targetEntry->next;
 			targetEntry->next = freeEntry;
+
 			return true;
         }
 		// Case 3b: Bucket overlap
@@ -579,6 +582,9 @@ private:
 		{
 			freeEntry->item = sourceEntry->item;
 			freeEntry->next = targetEntry->next;
+			targetEntry->next = freeEntry;
+
+			return true;
 		}
 
 		// Case 2b: Bucket overlap - forward until hash collision is found, then insert
@@ -606,10 +612,11 @@ private:
 		m_size = m_freeCount = m_freeOffset = newSize;
 
 		// Initialize new table data (clear next pointers)
-		if (newEntries) {
+		if (newEntries)
+		{
 			_Entry * p = newEntries;
 			for (UInt32 i = 0; i < newSize; i++, p++)
-				*p = _Entry();
+				p->next = NULL;
 		}
 
 		// Copy old entries, free old table data
@@ -625,18 +632,61 @@ private:
 
 public:
 
-	tHashSet() : m_size(0), m_freeCount(0), m_freeOffset(0), m_entries(NULL)
+	tHashSet() : m_size(0), m_freeCount(0), m_freeOffset(0), m_entries(NULL), m_eolPtr(&sentinel) { }
+
+	UInt32	Size() const		{ return m_size; }
+	UInt32	FreeCount() const	{ return m_freeCount; }
+	UInt32	FillCount() const	{ return m_size - m_freeCount; }
+
+	class Iterator
 	{
-		// TODO: Initialize eolPtr
+		_Entry * m_cur;
+		_Entry * m_end;
+
+		void Forward(bool inc)
+		{
+			if (IsDone())
+				return;
+
+			if (inc)
+				m_cur++;
+
+			while (!IsDone() && m_cur->IsFree())
+				m_cur++;
+		}
+
+	public:
+
+		Iterator(_Entry * start, _Entry * end) : m_cur(start), m_end(end)
+		{
+			if (!m_cur)
+			{
+				m_end = NULL;
+				return;
+			}
+				
+			Forward(false);
+		}
+
+		Iterator operator++()		{ Forward(true); return *this; }
+		const Item * operator->()	{ return m_cur ? const_cast<const Item*>(&m_cur->item) : NULL; }
+		const Item * operator*()	{ return m_cur ? const_cast<const Item*>(&m_cur->item) : NULL; }
+		Item * Get()				{ return m_cur ? &m_cur->item : NULL; }
+		bool IsDone()				{ return m_cur >= m_end; }
+	};
+	
+	const Iterator Entries() const
+	{
+		return Iterator(m_entries, (_Entry*) (((UInt32) m_entries) + sizeof(_Entry) * m_size));
 	}
 
-	template <class KeyType>
-	tItem * Find(KeyType key)
+	template <typename KeyType>
+	Item * Find(KeyType key)
 	{
 		if (!m_entries)
 			return NULL;
 
-		_Entry * entry = GetEntry(tItem::CalcHash(key));
+		_Entry * entry = GetEntry(Item::CalcHash(key));
 		if (! entry->next)
 			return NULL;
 
@@ -650,22 +700,19 @@ public:
 		return &entry->item;
 	}
 
-	void Add(tItem * item)
+	void Add(Item * item)
 	{
-		if (! m_entries)
-			return;
-
 		while (!Insert(item))
 			Grow();
 	}
 
-	template <class KeyType>
+	template <typename KeyType>
 	bool Remove(KeyType key)
 	{
 		if ( !m_entries)
 			return false;
 
-		_Entry * entry = GetEntry(tItem::CalcHash(key));
+		_Entry * entry = GetEntry(Item::CalcHash(key));
 		if (! entry->next)
 			return NULL;
 
@@ -713,3 +760,43 @@ public:
 	}
 };
 STATIC_ASSERT(sizeof(tHashSet<void*>) == 0x1C);
+
+template <typename Item>
+typename tHashSet<Item>::_Entry tHashSet<Item>::sentinel = tHashSet<Item>::_Entry();
+
+
+
+class HandleTableItem
+{
+public:
+	UInt64		handle;		// 000
+
+	HandleTableItem() : handle(0) { }
+	HandleTableItem(UInt64 a_handle) : handle(a_handle) { }
+
+	static UInt32 CalcHash(UInt64 a_handle)
+	{
+		UInt32 hash;
+		CRC32_Calc8(&hash, (UInt64) a_handle);
+		return hash;
+	}
+
+	UInt32 GetHash() const
+	{
+		UInt32 hash;
+		CRC32_Calc8(&hash, handle);
+		return hash;
+	}
+
+	bool Equals(HandleTableItem * item) const
+	{
+		return item->handle == handle;
+	}
+
+	bool Matches(UInt64 a_handle) const
+	{
+		return handle == a_handle;
+	}
+};
+
+typedef tHashSet<HandleTableItem> HandleTable;

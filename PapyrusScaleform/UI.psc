@@ -2,7 +2,7 @@ Scriptname UI Hidden
 
 ; For functions that require a menuName, potential values are
 ;
-;	"Inventory Menu"
+;	"InventoryMenu"
 ;	"Console"
 ;	"Dialogue Menu"
 ;	"HUD Menu"
@@ -10,25 +10,25 @@ Scriptname UI Hidden
 ;	"MessageBoxMenu"
 ;	"Cursor Menu"
 ;	"Fader Menu"
-;	"Magic Menu"
+;	"MagicMenu"
 ;	"Top Menu"
 ;	"Overlay Menu"
 ;	"Overlay Interaction Menu"
 ;	"Loading Menu"
-;	"Tween Menu"
-;	"Barter Menu"
-;	"Gift Menu"
+;	"TweenMenu"
+;	"BarterMenu"
+;	"GiftMenu"
 ;	"Debug Text Menu"
-;	"Map Menu"
+;	"MapMenu"
 ;	"Lockpicking Menu"
 ;	"Quantity Menu"
-;	"Stats Menu"
-;	"Container Menu"
+;	"StatsMenu"
+;	"ContainerMenu"
 ;	"Sleep/Wait Menu"
 ;	"LevelUp Menu"
 ;	"Journal Menu"
 ;	"Book Menu"
-;	"Favorites Menu"
+;	"FavoritesMenu"
 ;	"RaceSex Menu"
 ;	"Crafting Menu"
 ;	"Training Menu"
@@ -37,6 +37,10 @@ Scriptname UI Hidden
 ;	"Credits Menu"
 ;	"TitleSequence Menu"
 ;	"Console Native UI Menu"
+;	"Kinect Menu"
+
+; Returns if the menu is currently open.
+bool Function IsMenuOpen(string menuName) global native
 
 ; The target parameter requires one the following prefixes:
 ;	_global		, for the default namespace;
@@ -92,6 +96,3 @@ Function InvokeBool(string menuName, string target, bool arg) global native
 Function InvokeNumber(string menuName, string target, float arg) global native
 Function InvokeString(string menuName, string target, string arg) global native
 
-
-; Returns if the menu is currently open.
-bool Function IsMenuOpen(string menuName) global native
