@@ -1,6 +1,7 @@
 #pragma once
 
 #include "skse/Utilities.h"
+#include "GameAPI.h"
 
 // core library types (lists, strings, vectors)
 // preferably only the ones that bethesda created (non-netimmerse)
@@ -444,9 +445,15 @@ extern const _CRC32_Calc4 CRC32_Calc4;
 typedef void (__cdecl * _CRC32_Calc8)(UInt32 * out, UInt64 data);
 extern const _CRC32_Calc8 CRC32_Calc8;
 
+template <typename T> UInt32 GetHash(T* key) { STATIC_ASSERT(false); }
+template <> inline UInt32 GetHash<UInt32> (UInt32 * key) { UInt32 hash; CRC32_Calc4(&hash, *key); return hash; }
+template <> inline UInt32 GetHash<UInt64> (UInt64 * key) { UInt32 hash; CRC32_Calc8(&hash, *key); return hash; }
+
+template <typename T, template <typename ElementType> class Cont>
+class Stack;
 
 // 01C
-template <typename Item>
+template <typename KeyBase, typename Item>
 class tHashSet
 {
 	struct _Entry
@@ -456,6 +463,12 @@ class tHashSet
 
 		bool		IsFree() const	{ return next == NULL; }
 		void		Free()			{ next = NULL; }
+
+		void Dump(void)
+		{
+			_MESSAGE("\t\titem: %d", (KeyBase)item);
+			_MESSAGE("\t\tnext: %08X", next);
+		}
 	};
 
 	static _Entry sentinel;
@@ -464,7 +477,7 @@ class tHashSet
 	UInt32		m_size;			// 004
 	UInt32		m_freeCount;	// 008
 	UInt32		m_freeOffset;	// 00C
-	_Entry		* m_eolPtr;		// 010
+	_Entry 		* m_eolPtr;		// 010
 	UInt32		unk_014;		// 014
 	_Entry		* m_entries;	// 018
 
@@ -500,7 +513,8 @@ class tHashSet
 		if (! m_entries)
 			return false;
 
-		_Entry * targetEntry = GetEntry(item->GetHash());
+		KeyBase k = (KeyBase)*item;
+		_Entry * targetEntry = GetEntry(GetHash<KeyBase>(&k));
 		_Entry * p = NULL;
 
 		// Case 1: Target entry is free
@@ -519,7 +533,7 @@ class tHashSet
 		p = targetEntry;
 		do
 		{
-			if (p->item.Equals(item))
+			if (p->item == *item)
 				return true;
 			p = p->next;
 		}
@@ -532,7 +546,8 @@ class tHashSet
 		if (!freeEntry)
 			return false;
 
-		p = GetEntry(targetEntry->item.GetHash());
+		k = (KeyBase)targetEntry->item;
+		p = GetEntry(GetHash<KeyBase>((KeyBase*) &k));
 
 		// Case 3a: Hash collision - insert new entry between target entry and successor
         if (targetEntry == p)
@@ -560,7 +575,8 @@ class tHashSet
 		if (! m_entries)
 			return false;
 
-		_Entry * targetEntry = GetEntry(sourceEntry->item.GetHash());
+		KeyBase k = (KeyBase)sourceEntry->item;
+		_Entry * targetEntry = GetEntry(GetHash<KeyBase>(&k));
 
 		// Case 1: Target location is unused
 		if (!targetEntry->next)
@@ -575,7 +591,8 @@ class tHashSet
 		// Target location is in use. Either hash collision or bucket overlap.
 
 		_Entry * freeEntry = NextFreeEntry();
-		_Entry * p = GetEntry(targetEntry->item.GetHash());
+		k = (KeyBase)targetEntry->item;
+		_Entry * p = GetEntry(GetHash<KeyBase>(&k));
 
 		// Case 2a: Hash collision - insert new entry between target entry and successor
 		if (targetEntry == p)
@@ -686,11 +703,11 @@ public:
 		if (!m_entries)
 			return NULL;
 
-		_Entry * entry = GetEntry(Item::CalcHash(key));
+		_Entry * entry = GetEntry(GetHash<KeyBase>((KeyBase*)&key));
 		if (! entry->next)
 			return NULL;
 
-		while (! entry->item.Matches(key))
+		while (!(entry->item == key))
 		{
 			entry = entry->next;
 			if (entry == m_eolPtr)
@@ -712,12 +729,12 @@ public:
 		if ( !m_entries)
 			return false;
 
-		_Entry * entry = GetEntry(Item::CalcHash(key));
+		_Entry * entry = GetEntry(GetHash<KeyBase>((KeyBase*)&key));
 		if (! entry->next)
 			return NULL;
 
 		_Entry * prevEntry = NULL;
-		while (! entry->item.Matches(key))
+		while (! (entry->item == key))
 		{
 			prevEntry = entry;
 			entry = entry->next;
@@ -744,7 +761,7 @@ public:
 		return true;
 	}
 
-	void Clear()
+	void Clear(void)
 	{
 		if (m_entries)
 		{
@@ -758,45 +775,27 @@ public:
 		}
 		m_freeCount = m_freeOffset = m_size;
 	}
-};
-STATIC_ASSERT(sizeof(tHashSet<void*>) == 0x1C);
 
-template <typename Item>
-typename tHashSet<Item>::_Entry tHashSet<Item>::sentinel = tHashSet<Item>::_Entry();
-
-
-
-class HandleTableItem
-{
-public:
-	UInt64		handle;		// 000
-
-	HandleTableItem() : handle(0) { }
-	HandleTableItem(UInt64 a_handle) : handle(a_handle) { }
-
-	static UInt32 CalcHash(UInt64 a_handle)
+	void Dump(void)
 	{
-		UInt32 hash;
-		CRC32_Calc8(&hash, (UInt64) a_handle);
-		return hash;
-	}
-
-	UInt32 GetHash() const
-	{
-		UInt32 hash;
-		CRC32_Calc8(&hash, handle);
-		return hash;
-	}
-
-	bool Equals(HandleTableItem * item) const
-	{
-		return item->handle == handle;
-	}
-
-	bool Matches(UInt64 a_handle) const
-	{
-		return handle == a_handle;
+		_MESSAGE("tHashSet:");
+		_MESSAGE("> size: %d", Size());
+		_MESSAGE("> free: %d", FreeCount());
+		_MESSAGE("> filled: %d", FillCount());
+		if (m_entries)
+		{
+			_Entry * p = m_entries;
+			for (UInt32 i = 0; i < m_size; i++, p++) {
+				_MESSAGE("* %d %s:", i, p->IsFree()?"(free)" : "");
+				p->Dump();
+			}
+		}
 	}
 };
+STATIC_ASSERT(sizeof(tHashSet<void*,void*>) == 0x1C);
 
-typedef tHashSet<HandleTableItem> HandleTable;
+template <typename Key, typename Item>
+typename tHashSet<Key,Item>::_Entry tHashSet<Key,Item>::sentinel = tHashSet<Key,Item>::_Entry();
+
+
+typedef tHashSet<UInt64,UInt64> HandleTable;

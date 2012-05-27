@@ -119,7 +119,7 @@ void RegisterPapyrusFunctions_Hook(VMClassRegistry ** registryPtr)
 
 	// Quest
 	papyrusQuest::RegisterFuncs(registry);
-	}
+}
 
 void Hooks_Papyrus_Init(void)
 {

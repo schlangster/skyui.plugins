@@ -177,6 +177,9 @@ public:
 	}
 };
 
+
+// This is no longer accurate - Kinect menu was added
+
 // 10C
 class UIStringHolder
 {
@@ -277,29 +280,15 @@ public:
 	IMenu		* menuInstance;		// 004	0 if the menu is not currently open
 	void		* menuConstructor;	// 008
 
-	static UInt32 CalcHash(const char * a_name)
-	{
-		UInt32 hash;
-		CRC32_Calc4(&hash, (UInt32) a_name);
-		return hash;
-	}
-
-	bool Matches(const char * a_name) const
-	{
-		return name == a_name;
-	}
-
-	UInt32 GetHash() const
-	{
-		UInt32 hash;
-		CRC32_Calc4(&hash, (UInt32) name);
-		return hash;
-	}
+	bool operator==(const MenuTableItem & rhs) const	{ return name == rhs.name; }
+	bool operator==(const char * a_name) const			{ return name == a_name; }
+	operator UInt32() const								{ return (UInt32)name; }
 };
 
-typedef tHashSet<MenuTableItem> MenuTable;
+typedef tHashSet<UInt32,MenuTableItem> MenuTable;
 
 
+// 11C
 class MenuManager
 {
 	// 030
@@ -346,7 +335,7 @@ private:
 	UnkArray	unk_094;	// 094
 	UInt32		unk_0A0;	// 0A0
 	MenuTable	menuTable;	// 0A4
-	UInt32		unk_0C0;	// 0C0 (= 0)	threadId
+	UInt32		unk_0C0;	// 0C0 (= 0)
 	UInt32		unk_0C4;	// 0C4 (= 0)
 	UInt32		unk_0C8;	// 0C8 (= 0)
 	UInt32		unk_0CC;	// 0CC (= 0)

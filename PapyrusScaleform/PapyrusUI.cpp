@@ -13,73 +13,73 @@
 
 namespace papyrusUI
 {
-bool CreateObjectRoot(GFxMovieView * view, const char * dest)
-{
-	std::string s;
-	Tokenizer tokens(dest, ".");
-
-	if (tokens.NextToken(s) == -1)
-		return false;
-
-	// Invalid root?
-	if (s.compare("_global") != 0 && s.compare("_root") != 0)
-		return false;
-
-	std::string curDest(s);
-
-	while(tokens.NextToken(s) != -1)
+	bool CreateObjectRoot(GFxMovieView * view, const char * dest)
 	{
-		GFxValue root;
-		view->GetVariable(&root, curDest.c_str());
-		const char * name = s.c_str();
+		std::string s;
+		Tokenizer tokens(dest, ".");
 
-		if (! root.HasMember(name))
+		if (tokens.NextToken(s) == -1)
+			return false;
+
+		// Invalid root?
+		if (s.compare("_global") != 0 && s.compare("_root") != 0)
+			return false;
+
+		std::string curDest(s);
+
+		while(tokens.NextToken(s) != -1)
 		{
-			GFxValue obj;
-			view->CreateObject(&obj);
-			root.SetMember(name, &obj);
+			GFxValue root;
+			view->GetVariable(&root, curDest.c_str());
+			const char * name = s.c_str();
+
+			if (! root.HasMember(name))
+			{
+				GFxValue obj;
+				view->CreateObject(&obj);
+				root.SetMember(name, &obj);
+			}
+
+			curDest.append(".");
+			curDest.append(s);
 		}
 
-		curDest.append(".");
-		curDest.append(s);
+		return true;
 	}
 
-	return true;
-}
+	bool ExtractTargetData(const char * target, std::string & dest, std::string & name)
+	{
+		// target format: [_global|_root].d.e.s.t.ValueName
+		
+		std::string t(target);
+		UInt32 lastDelim = t.rfind('.');
 
-bool ExtractTargetData(const char * target, std::string & dest, std::string & name)
-{
-	// target format: [_global|_root].d.e.s.t.ValueName
-	
-	std::string t(target);
-	UInt32 lastDelim = t.rfind('.');
+		// Need at least 1 delim
+		if (lastDelim == std::string::npos)
+			return false;
 
-	// Need at least 1 delim
-	if (lastDelim == std::string::npos)
-		return false;
+		dest = t.substr(0, lastDelim);
+		name = t.substr(lastDelim+1);
 
-	dest = t.substr(0, lastDelim);
-	name = t.substr(lastDelim+1);
-
-	return true;
-}
-
-bool PrepareSet(const char * target, GFxMovieView * view, GFxValue * fxDest, std::string & dest, std::string & name)
-{
-	if (! ExtractTargetData(target, dest, name))
-		return false;
-
-	// If dest exists, done
-	if (view->GetVariable(fxDest, dest.c_str()))
 		return true;
+	}
 
-	// Dest has to be created first
-	if (!CreateObjectRoot(view, dest.c_str()))
-		return false;
+	bool PrepareSet(const char * target, GFxMovieView * view, GFxValue * fxDest, std::string & dest, std::string & name)
+	{
+		if (! ExtractTargetData(target, dest, name))
+			return false;
 
-	// Try again now
-	return view->GetVariable(fxDest, dest.c_str());
-}
+		// If dest exists, done
+		if (view->GetVariable(fxDest, dest.c_str()))
+			return true;
+
+		// Dest has to be created first
+		if (!CreateObjectRoot(view, dest.c_str()))
+			return false;
+
+		// Try again now
+		return view->GetVariable(fxDest, dest.c_str());
+	}
 
 	void Invoke(StaticFunctionTag* thisInput, BSFixedString menuName, BSFixedString targetStr)
 	{
@@ -107,7 +107,7 @@ bool PrepareSet(const char * target, GFxMovieView * view, GFxValue * fxDest, std
 
 	bool IsMenuOpen(StaticFunctionTag* thisInput, BSFixedString menuName)
 	{
-		if (! menuName.data)
+		if (!menuName.data)
 			return false;
 
 		MenuManager * mm = MenuManager::GetSingleton();
@@ -126,7 +126,7 @@ bool PrepareSet(const char * target, GFxMovieView * view, GFxValue * fxDest, std
 	{
 		registry->RegisterFunction(
 			new NativeFunction3 <StaticFunctionTag, void, BSFixedString, BSFixedString, bool> ("SetBool", "UI", papyrusUI::SetT<bool>, registry));
-		
+
 		registry->RegisterFunction(
 			new NativeFunction3 <StaticFunctionTag, void, BSFixedString, BSFixedString, float> ("SetNumber", "UI", papyrusUI::SetT<float>, registry));
 
