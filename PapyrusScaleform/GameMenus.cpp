@@ -1,14 +1,18 @@
 #include "GameMenus.h"
 
-GFxMovieView * MenuManager::GetMovieView(const char * menuName)
+GFxMovieView * MenuManager::GetMovieView(UInt32 menuID)
 {
 	// Necessary #1?
-	StringCache::Ref menuNameRef;
-	CALL_MEMBER_FN(&menuNameRef, ctor)(menuName);
+	//StringCache::Ref menuNameRef;
+	//CALL_MEMBER_FN(&menuNameRef, ctor)(menuName);
 
-	MenuTableItem * item = menuTable.Find<const char *>(menuNameRef.data);
+	BSFixedString * menuName = LookupMenuName(menuID);
+	if (!menuName || !menuName->data)
+		return NULL;
 
-	CALL_MEMBER_FN(&menuNameRef, Release)();
+	MenuTableItem * item = menuTable.Find<BSFixedString>(*menuName);
+
+	//CALL_MEMBER_FN(&menuNameRef, Release)();
 
 	if (!item)
 		return NULL;
@@ -18,9 +22,9 @@ GFxMovieView * MenuManager::GetMovieView(const char * menuName)
 		return NULL;
 
 	// Necessary #2?
-	menu->AddRef();
+	//menu->AddRef();
 	GFxMovieView * view = menu->view;
-	menu->Release();
+	//menu->Release();
 
 	return view;
 }

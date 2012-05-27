@@ -29,16 +29,16 @@ namespace papyrusUI
 	bool PrepareSet(const char * target, GFxMovieView * view, GFxValue * fxDest, std::string & dest, std::string & name);
 	
 	template <typename T>
-	void SetT(StaticFunctionTag* thisInput, BSFixedString menuName, BSFixedString targetStr, T value)
+	void SetT(StaticFunctionTag* thisInput, UInt32 menuID, BSFixedString targetStr, T value)
 	{
-		if (!menuName.data || !targetStr.data)
+		if (!targetStr.data)
 			return;
 
 		MenuManager * mm = MenuManager::GetSingleton();
 		if (!mm)
 			return;
 
-		GFxMovieView * view = mm->GetMovieView(menuName.data);
+		GFxMovieView * view = mm->GetMovieView(menuID);
 		if (!view)
 			return;
 
@@ -53,16 +53,16 @@ namespace papyrusUI
 	}
 
 	template <typename T>
-	T GetT(StaticFunctionTag* thisInput, BSFixedString menuName, BSFixedString sourceStr)
+	T GetT(StaticFunctionTag* thisInput, UInt32 menuID, BSFixedString sourceStr)
 	{
-		if (!menuName.data || !sourceStr.data)
+		if (!sourceStr.data)
 			return 0;
 
 		MenuManager * mm = MenuManager::GetSingleton();
 		if (!mm)
 			return 0;
 
-		GFxMovieView * view = mm->GetMovieView(menuName.data);
+		GFxMovieView * view = mm->GetMovieView(menuID);
 		if (!view)
 			return 0;
 
@@ -74,16 +74,16 @@ namespace papyrusUI
 	}
 
 	template <typename T>
-	void InvokeArgT(StaticFunctionTag* thisInput, BSFixedString menuName, BSFixedString targetStr, T arg)
+	void InvokeArgT(StaticFunctionTag* thisInput, UInt32 menuID, BSFixedString targetStr, T arg)
 	{
-		if (!menuName.data || !targetStr.data)
+		if (!targetStr.data)
 			return;
 
 		MenuManager * mm = MenuManager::GetSingleton();
 		if (!mm)
 			return;
 
-		GFxMovieView * view = mm->GetMovieView(menuName.data);
+		GFxMovieView * view = mm->GetMovieView(menuID);
 		if (!view)
 			return;
 
@@ -100,6 +100,6 @@ namespace papyrusUI
 		fxDest.Invoke(name.c_str(), NULL, &args, 1);		
 	}
 
-	void Invoke(StaticFunctionTag* thisInput, BSFixedString menuName, BSFixedString targetStr);
-	bool IsMenuOpen(StaticFunctionTag* thisInput, BSFixedString menu);
+	void Invoke(StaticFunctionTag* thisInput, UInt32 menuID, BSFixedString targetStr);
+	bool IsMenuOpen(StaticFunctionTag* thisInput, UInt32 menuID);
 }

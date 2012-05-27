@@ -515,7 +515,6 @@ class tHashSet
 
 		KeyBase k = (KeyBase)*item;
 		_Entry * targetEntry = GetEntry(GetHash<KeyBase>(&k));
-		_Entry * p = NULL;
 
 		// Case 1: Target entry is free
 		if (!targetEntry->next)
@@ -530,7 +529,7 @@ class tHashSet
 		// -- Target entry is already in use
 
 		// Case 2: Item already included
-		p = targetEntry;
+		_Entry * p = targetEntry;
 		do
 		{
 			if (p->item == *item)
@@ -698,7 +697,7 @@ public:
 	}
 
 	template <typename KeyType>
-	Item * Find(KeyType key)
+	Item * Find(KeyType key) const
 	{
 		if (!m_entries)
 			return NULL;
