@@ -2,6 +2,7 @@
 
 #include "skse/ScaleformCallbacks.h"
 #include "skse/GameTypes.h"
+#include "skse/GameEvents.h"
 #include "skse/Utilities.h"
 
 class TESObjectREFR;
@@ -289,7 +290,6 @@ public:
 
 typedef tHashSet<UInt32,MenuTableItem> MenuTable;
 
-
 // 11C
 class MenuManager
 {
@@ -334,20 +334,6 @@ class MenuManager
 	};
 
 	// 030
-	struct Unknown1
-	{
-		UInt32		unk_000;	// 000 (= 0)
-		UInt32		unk_004;	// 004 (= 0)
-
-		UnkArray	unk_008;	// 008
-		UnkArray	unk_014;	// 014
-		UnkArray	unk_020;	// 020
-
-		UInt32		unk_02C;	// 02C (= 0)
-	};
-	STATIC_ASSERT(sizeof(Unknown1) == 0x30);
-
-	// 030
 	struct Unknown3
 	{
 		UInt32		freqLow;	// 000 (= Frequency.LowPart)
@@ -370,27 +356,27 @@ class MenuManager
 
 private:
 
-	UInt32		unk_000;	// 000
-	Unknown1	unk_004;	// 004
-	Unknown1	unk_034;	// 034
-	Unknown1	unk_064;	// 064
-	UnkArray	unk_094;	// 094
-	UInt32		unk_0A0;	// 0A0
-	MenuTable	menuTable;	// 0A4
-	UInt32		unk_0C0;	// 0C0 (= 0)
-	UInt32		unk_0C4;	// 0C4 (= 0)
-	UInt32		unk_0C8;	// 0C8 (= 0)
-	UInt32		unk_0CC;	// 0CC (= 0)
-	UInt32		unk_0D0;	// 0D0 (= 0)
-	UInt32		unk_0D4;	// 0D4 (= 0)
-	UInt32		unk_0D8;	// 0D8 (= 0)
-	UInt32		unk_0DC;	// 0DC (= 0)
-	UInt32		unk_0E0;	// 0E0 (= 0)
-	UInt32		unk_0E4;	// 0E4
-	Unknown3	unk_0E8;
-	bool		unk_118;	// 118 (= 0)	dbg: 1
-	bool		unk_119;	// 119 (= 0)
-	char		pad[2];
+	UInt32					unk_000;	// 000
+	EventDispatcher<void*>	unk_004;	// 004
+	EventDispatcher<void*>	unk_034;	// 034
+	EventDispatcher<void*>	unk_064;	// 064
+	UnkArray				unk_094;	// 094
+	UInt32					unk_0A0;	// 0A0
+	MenuTable				menuTable;	// 0A4
+	UInt32					unk_0C0;	// 0C0 (= 0)
+	UInt32					unk_0C4;	// 0C4 (= 0)
+	UInt32					unk_0C8;	// 0C8 (= 0)
+	UInt32					unk_0CC;	// 0CC (= 0)
+	UInt32					unk_0D0;	// 0D0 (= 0)
+	UInt32					unk_0D4;	// 0D4 (= 0)
+	UInt32					unk_0D8;	// 0D8 (= 0)
+	UInt32					unk_0DC;	// 0DC (= 0)
+	UInt32					unk_0E0;	// 0E0 (= 0)
+	UInt32					unk_0E4;	// 0E4
+	Unknown3				unk_0E8;
+	bool					unk_118;	// 118 (= 0)	dbg: 1
+	bool					unk_119;	// 119 (= 0)
+	char					pad[2];
 
 public:
 

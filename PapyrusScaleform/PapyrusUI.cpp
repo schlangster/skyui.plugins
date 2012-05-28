@@ -1,14 +1,11 @@
 #include "PapyrusUI.h"
-
 #include "PapyrusVM.h"
 #include "PapyrusNativeFunctions.h"
-
 #include "ScaleformCallbacks.h"
 #include "ScaleformMovie.h"
-
 #include "GameMenus.h"
-
 #include "Utilities.h"
+#include "GameEvents.h"
 
 
 namespace papyrusUI

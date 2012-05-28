@@ -23,9 +23,11 @@ public:
 
 class SimpleLock
 {
-private:
 	volatile UInt32	threadID;
 	UInt32			lockCount;
+
+public:
+	SimpleLock() : threadID(0), lockCount(0) {}
 };
 
 // refcounted threadsafe string storage
@@ -105,10 +107,14 @@ public:
 	struct Array {
 		T* entries;
 		UInt32 unk4;
+
+		Array() : entries(NULL), unk4(0) {};
 	};
 
 	Array arr;
 	UInt32 count;
+	
+	tArray() : count(0) {};
 	
 	bool GetNthItem(UInt32 index, T& pT)
 	{

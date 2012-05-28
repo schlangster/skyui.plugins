@@ -6,22 +6,23 @@
 template <typename T>
 class EventDispatcher;
 
+
+enum EventResult
+{
+	kEvent_Continue = 0,
+	kEvent_Abort
+};
+
 // 04
 template <typename T>
 class BSTEventSink
 {
 public:
-	enum
-	{
-		kEvent_Continue = 0,
-		kEvent_Abort
-	};
-
-	virtual ~BSTEventSink() {}; //TODO
-	virtual	UInt32	ReceiveEvent(T * evn, EventDispatcher<T> * dispatcher); // pure
-
+	virtual ~BSTEventSink();
+	virtual	EventResult	ReceiveEvent(T * evn, EventDispatcher<T> * dispatcher); // pure
 //	void	** _vtbl;	// 00
 };
+
 
 // 30
 template <typename T>
@@ -35,6 +36,7 @@ public:
 };
 
 STATIC_ASSERT(sizeof(BSTEventSource<void*>) == 0x30);
+
 
 // 030
 template <typename T>
@@ -55,6 +57,7 @@ class EventDispatcher
 	DEFINE_MEMBER_FN(SendEvent_Internal, void, 0x0044BE70, T * evn);
 
 public:
+
 	EventDispatcher() : stateFlag(false) {}
 
 	void AddEventSink(SinkType * eventSink)		{ CALL_MEMBER_FN(this,AddEventSink_Internal)(eventSink); }
@@ -63,30 +66,33 @@ public:
 };
 STATIC_ASSERT(sizeof(EventDispatcher<void*>) == 0x30);
 
-// Example
-class SleepStartEvent
+
+// Example:
+
+struct TESSleepStartEvent
 {
-public:
-	float startTime;	// 000
-	float endTime;		// 004
+	float startTime;	// 00
+	float endTime;		// 04
 };
 
-template<>
-class BSTEventSink<SleepStartEvent>
+// 04
+template <>
+class BSTEventSink <TESSleepStartEvent>
 {
 public:
-	virtual ~BSTEventSink() {}; //TODO
-	virtual	UInt32	ReceiveEvent(SleepStartEvent * evn, EventDispatcher<SleepStartEvent> * dispatcher) = 0;
+	virtual ~BSTEventSink() {}; // todo?
+	virtual	EventResult ReceiveEvent(TESSleepStartEvent * evn, EventDispatcher<TESSleepStartEvent> * dispatcher) = 0;
 };
 
-class CustomSleepEventSink : public BSTEventSink<SleepStartEvent>
+
+class SKSESleepEventSink : public BSTEventSink <TESSleepStartEvent>
 {
 public:
-	UInt32	ReceiveEvent(SleepStartEvent * evn, EventDispatcher<SleepStartEvent> * dispatcher)
+	virtual EventResult	ReceiveEvent(TESSleepStartEvent * evn, EventDispatcher<TESSleepStartEvent> * dispatcher)
 	{
 		_MESSAGE("Received event. Sleep from %f to %f.", evn->startTime, evn->endTime);
-		return 0;
+		return kEvent_Continue;
 	}
 };
 
-extern EventDispatcher<SleepStartEvent> * g_sleepStartEventDispatcher;
+extern EventDispatcher<TESSleepStartEvent> * g_sleepStartEventDispatcher;
