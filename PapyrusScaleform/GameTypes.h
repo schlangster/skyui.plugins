@@ -464,9 +464,6 @@ template <typename T> UInt32 GetHash(T* key) { STATIC_ASSERT(false); }
 template <> inline UInt32 GetHash<UInt32> (UInt32 * key) { UInt32 hash; CRC32_Calc4(&hash, *key); return hash; }
 template <> inline UInt32 GetHash<UInt64> (UInt64 * key) { UInt32 hash; CRC32_Calc8(&hash, *key); return hash; }
 
-template <typename T, template <typename ElementType> class Cont>
-class Stack;
-
 // 01C
 template <typename KeyBase, typename Item>
 class tHashSet
