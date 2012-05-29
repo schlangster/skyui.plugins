@@ -23,12 +23,21 @@ public:
 
 class SimpleLock
 {
-	volatile UInt32	threadID;
-	UInt32			lockCount;
+	enum
+	{
+		kFastSpinThreshold = 10000
+	};
+
+	volatile SInt32	threadID;	// 00
+	UInt32			lockCount;	// 04
 
 public:
 	SimpleLock() : threadID(0), lockCount(0) {}
+
+	void Lock(void);
+	void Release(void);
 };
+STATIC_ASSERT(sizeof(SimpleLock) == 0x8);
 
 // refcounted threadsafe string storage
 // use StringCache::Ref to access everything, other internals are for documentation only

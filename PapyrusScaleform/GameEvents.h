@@ -2,6 +2,7 @@
 
 #include "Utilities.h"
 #include "GameTypes.h"
+#include "PapyrusVM.h"
 
 template <typename T>
 class EventDispatcher;
@@ -69,13 +70,26 @@ STATIC_ASSERT(sizeof(EventDispatcher<void*>) == 0x30);
 
 // Example:
 
+// 08
 struct TESSleepStartEvent
 {
 	float startTime;	// 00
 	float endTime;		// 04
 };
 
-// 04
+// 08
+struct MenuOpenCloseEvent
+{
+	BSFixedString	menuName;	// 00
+	bool			opening;	// 04
+	char			pad[3];
+};
+
+// Todo
+struct MenuModeChangeEvent
+{
+};
+
 template <>
 class BSTEventSink <TESSleepStartEvent>
 {
@@ -84,15 +98,13 @@ public:
 	virtual	EventResult ReceiveEvent(TESSleepStartEvent * evn, EventDispatcher<TESSleepStartEvent> * dispatcher) = 0;
 };
 
-
-class SKSESleepEventSink : public BSTEventSink <TESSleepStartEvent>
+template <>
+class BSTEventSink <MenuOpenCloseEvent>
 {
 public:
-	virtual EventResult	ReceiveEvent(TESSleepStartEvent * evn, EventDispatcher<TESSleepStartEvent> * dispatcher)
-	{
-		_MESSAGE("Received event. Sleep from %f to %f.", evn->startTime, evn->endTime);
-		return kEvent_Continue;
-	}
+	virtual ~BSTEventSink() {}; // todo?
+	virtual	EventResult ReceiveEvent(MenuOpenCloseEvent * evn, EventDispatcher<MenuOpenCloseEvent> * dispatcher) = 0;
 };
 
-extern EventDispatcher<TESSleepStartEvent> * g_sleepStartEventDispatcher;
+// For testing
+//extern EventDispatcher<TESSleepStartEvent> * g_sleepStartEventDispatcher;

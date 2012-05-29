@@ -357,9 +357,11 @@ class MenuManager
 private:
 
 	UInt32					unk_000;	// 000
-	EventDispatcher<void*>	unk_004;	// 004
-	EventDispatcher<void*>	unk_034;	// 034
-	EventDispatcher<void*>	unk_064;	// 064
+
+	EventDispatcher<MenuOpenCloseEvent>		menuOpenCloseEventDispatcher;	// 004
+	EventDispatcher<MenuModeChangeEvent>	menuModeChangeEventDispatcher;	// 034
+	EventDispatcher<void*>					unk_064;						// 064 - New in 1.6.87.0 - Kintect related?
+
 	UnkArray				unk_094;	// 094
 	UInt32					unk_0A0;	// 0A0
 	MenuTable				menuTable;	// 0A4
@@ -374,11 +376,16 @@ private:
 	UInt32					unk_0E0;	// 0E0 (= 0)
 	UInt32					unk_0E4;	// 0E4
 	Unknown3				unk_0E8;
-	bool					unk_118;	// 118 (= 0)	dbg: 1
+	bool					unk_118;	// 118 (= 0)
 	bool					unk_119;	// 119 (= 0)
 	char					pad[2];
 
 public:
+
+	EventDispatcher<MenuOpenCloseEvent> * MenuOpenCloseEventDispatcher()
+	{
+		return &menuOpenCloseEventDispatcher;
+	}
 
 	static MenuManager * GetSingleton(void)
 	{

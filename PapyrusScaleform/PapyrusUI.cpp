@@ -1,6 +1,4 @@
 #include "PapyrusUI.h"
-#include "PapyrusVM.h"
-#include "PapyrusNativeFunctions.h"
 #include "ScaleformCallbacks.h"
 #include "ScaleformMovie.h"
 #include "GameMenus.h"
@@ -114,8 +112,12 @@ namespace papyrusUI
 
 		return CALL_MEMBER_FN(mm, IsMenuOpen)(menuName);
 	}
+};
 
-	void RegisterFuncs(VMClassRegistry* registry)
+#include "PapyrusVM.h"
+#include "PapyrusNativeFunctions.h"
+
+void papyrusUI::RegisterFuncs(VMClassRegistry* registry)
 	{
 		registry->RegisterFunction(
 			new NativeFunction3 <StaticFunctionTag, void, UInt32, BSFixedString, bool> ("SetBool", "UI", papyrusUI::SetT<bool>, registry));
@@ -150,4 +152,3 @@ namespace papyrusUI
 		registry->RegisterFunction(
 			new NativeFunction1 <StaticFunctionTag, bool, UInt32> ("IsMenuOpen", "UI", papyrusUI::IsMenuOpen, registry));
 	}
-}

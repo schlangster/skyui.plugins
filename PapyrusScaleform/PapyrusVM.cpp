@@ -1,5 +1,6 @@
 #include "PapyrusVM.h"
 #include "GameAPI.h"
+#include "PapyrusEvents.h"
 
 IObjectHandlePolicy	** g_objectHandlePolicy = (IObjectHandlePolicy **)0x0141CA38;
 SkyrimVM			** g_skyrimVM = (SkyrimVM **)0x012DAF1C;
@@ -18,7 +19,9 @@ void SkyrimVM::RevertGlobalData_Hook(void)
 {
 	CALL_MEMBER_FN(this, RevertGlobalData_Internal)();
 
-	// TODO
+	g_menuOpenCloseRegHolder.Acquire();
+	g_menuOpenCloseRegHolder.data.clear();
+	g_menuOpenCloseRegHolder.Release();
 
 	// _MESSAGE("Executed SkyrimVM::RevertGlobalData_Hook.");
 }
