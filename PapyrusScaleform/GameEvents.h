@@ -28,7 +28,7 @@ class EventDispatcher
 	MEMBER_FN_PREFIX(EventDispatcher);
 	DEFINE_MEMBER_FN(AddEventSink_Internal, void, 0x00456010, SinkT * eventSink);
 	DEFINE_MEMBER_FN(RemoveEventSink_Internal, void, 0x008C74B0, SinkT * eventSink);
-	DEFINE_MEMBER_FN(SendEvent_Internal, void, 0x0044BE70, EventT * evn);
+	DEFINE_MEMBER_FN(SendEvent_Internal, void, 0x0044BE70, EventArgT * evn);
 
 public:
 
@@ -36,7 +36,7 @@ public:
 
 	void AddEventSink(SinkT * eventSink)		{ CALL_MEMBER_FN(this,AddEventSink_Internal)(eventSink); }
 	void RemoveEventSink(SinkT * eventSink)		{ CALL_MEMBER_FN(this,RemoveEventSink_Internal)(eventSink); }
-	void SendEvent(EventT * evn)				{ CALL_MEMBER_FN(this,SendEvent_Internal)(evn); }
+	void SendEvent(EventArgT * evn)				{ CALL_MEMBER_FN(this,SendEvent_Internal)(evn); }
 };
 STATIC_ASSERT(sizeof(EventDispatcher<void*>) == 0x30);
 
