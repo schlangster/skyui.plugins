@@ -10,9 +10,12 @@ void SkyrimVM::OnFormDelete_Hook(UInt64 handle)
 {
 	CALL_MEMBER_FN(this, UnregisterForSleep_Internal)(handle);
 
-	// TODO
+	g_menuOpenCloseRegHolder.Acquire();
+	for(MenuOpenCloseRegTable::iterator iter = g_menuOpenCloseRegHolder.data.begin(); iter != g_menuOpenCloseRegHolder.data.end(); ++iter)
+		iter->second.erase(handle);
+	g_menuOpenCloseRegHolder.Release();
 
-	// _MESSAGE("Executed SkyrimVM::OnFormDelete_Hook.");
+	_MESSAGE("Executed SkyrimVM::OnFormDelete_Hook.");
 }
 
 void SkyrimVM::RevertGlobalData_Hook(void)
@@ -23,7 +26,9 @@ void SkyrimVM::RevertGlobalData_Hook(void)
 	g_menuOpenCloseRegHolder.data.clear();
 	g_menuOpenCloseRegHolder.Release();
 
-	// _MESSAGE("Executed SkyrimVM::RevertGlobalData_Hook.");
+	// Todo policy->Addref/release?
+
+	_MESSAGE("Executed SkyrimVM::RevertGlobalData_Hook.");
 }
 
 

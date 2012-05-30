@@ -2,17 +2,11 @@
 
 GFxMovieView * MenuManager::GetMovieView(UInt32 menuID)
 {
-	// Necessary #1?
-	//StringCache::Ref menuNameRef;
-	//CALL_MEMBER_FN(&menuNameRef, ctor)(menuName);
-
 	BSFixedString * menuName = LookupMenuName(menuID);
 	if (!menuName || !menuName->data)
 		return NULL;
 
-	MenuTableItem * item = menuTable.Find<BSFixedString>(*menuName);
-
-	//CALL_MEMBER_FN(&menuNameRef, Release)();
+	MenuTableItem * item = menuTable.Find(menuName);
 
 	if (!item)
 		return NULL;

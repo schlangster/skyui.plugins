@@ -152,7 +152,6 @@ namespace papyrusForm
 
 			oldState[i] = data[i];
 		}
-
 	}
 
 	void RegisterForMenuOpenClose(TESForm * thisForm, UInt32 menuID)
@@ -165,8 +164,35 @@ namespace papyrusForm
 		if (!mm)
 			return;
 
-		// Will only be added once.
+		// Will only be added once. TODO move this somewhere else.
 		mm->MenuOpenCloseEventDispatcher()->AddEventSink(&g_skseEventHandler);
+
+		if (*g_inputEventDispatcher)
+			(*g_inputEventDispatcher)->AddEventSink(&g_skseEventHandler);
+
+		VMClassRegistry		* registry =	(*g_skyrimVM)->GetClassRegistry();
+		IObjectHandlePolicy	* policy =		registry->GetHandlePolicy();
+
+		UInt64	handle = policy->Create(thisForm->formType, (void *)thisForm);
+
+		// This probably prevents object from being unloaded once regged for something as described in the wiki.
+		// Would have to check if RevertGlobalData cares about this.
+		// policy->AddRef(handle);
+
+		g_menuOpenCloseRegHolder.Acquire();
+		g_menuOpenCloseRegHolder.data[menuName->data].insert(handle);
+		g_menuOpenCloseRegHolder.Release();
+	}
+
+	void UnregisterFromMenuOpenClose(TESForm * thisForm, UInt32 menuID)
+	{
+		BSFixedString * menuName = MenuManager::LookupMenuName(menuID);
+		if (!menuName)
+			return;
+
+		MenuManager * mm = MenuManager::GetSingleton();
+		if (!mm)
+			return;
 
 		VMClassRegistry		* registry =	(*g_skyrimVM)->GetClassRegistry();
 		IObjectHandlePolicy	* policy =		registry->GetHandlePolicy();
@@ -174,7 +200,24 @@ namespace papyrusForm
 		UInt64	handle = policy->Create(thisForm->formType, (void *)thisForm);
 
 		g_menuOpenCloseRegHolder.Acquire();
-		g_menuOpenCloseRegHolder.data[menuName->data].insert(handle);
+		g_menuOpenCloseRegHolder.data[menuName->data].erase(handle);
+		g_menuOpenCloseRegHolder.Release();
+	}
+
+	void UnregisterFromAllMenuOpenClose(TESForm * thisForm)
+	{
+		MenuManager * mm = MenuManager::GetSingleton();
+		if (!mm)
+			return;
+
+		VMClassRegistry		* registry =	(*g_skyrimVM)->GetClassRegistry();
+		IObjectHandlePolicy	* policy =		registry->GetHandlePolicy();
+
+		UInt64	handle = policy->Create(thisForm->formType, (void *)thisForm);
+
+		g_menuOpenCloseRegHolder.Acquire();
+		for(MenuOpenCloseRegTable::iterator iter = g_menuOpenCloseRegHolder.data.begin(); iter != g_menuOpenCloseRegHolder.data.end(); ++iter)
+			iter->second.erase(handle);
 		g_menuOpenCloseRegHolder.Release();
 	}
 }
@@ -213,4 +256,10 @@ void papyrusForm::RegisterFuncs(VMClassRegistry* registry)
 
 	registry->RegisterFunction(
 		new NativeFunction1 <TESForm, void, UInt32> ("RegisterForMenuOpenClose", "Form", papyrusForm::RegisterForMenuOpenClose, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction1 <TESForm, void, UInt32> ("UnregisterFromMenuOpenClose", "Form", papyrusForm::UnregisterFromMenuOpenClose, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction0 <TESForm, void> ("UnregisterFromAllMenuOpenClose", "Form", papyrusForm::UnregisterFromAllMenuOpenClose, registry));
 }

@@ -27,4 +27,6 @@ namespace papyrusForm
 	void UpdateKeys(UInt8 * data);
 
 	void RegisterForMenuOpenClose(TESForm * thisForm, UInt32 menuID);
+	void UnregisterForMenuOpenClose(TESForm * thisForm, UInt32 menuID);
+	void UnregisterForAllMenuOpenClose(TESForm * thisForm);
 }

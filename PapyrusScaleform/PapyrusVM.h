@@ -364,20 +364,3 @@ public:
 private:
 	UInt32	data;
 };
-
-class OneStringArg : public IFunctionArguments
-{
-public:
-	OneStringArg(const char * _data) : data(_data) { }
-
-	virtual bool	Copy(Output * dst)
-	{
-		dst->Resize(1);
-		dst->Get(0)->SetString(data);
-
-		return true;
-	}
-
-private:
-	const char * data;
-};

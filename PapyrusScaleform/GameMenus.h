@@ -273,7 +273,6 @@ public:
 	// ...
 };
 
-
 // 00C
 class MenuTableItem
 {
@@ -288,7 +287,7 @@ public:
 	operator UInt32() const								{ return (UInt32)name.data; }
 };
 
-typedef tHashSet<UInt32,MenuTableItem> MenuTable;
+typedef tHashSet<MenuTableItem,BSFixedString> MenuTable;
 
 // 11C
 class MenuManager

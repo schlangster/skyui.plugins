@@ -461,11 +461,13 @@ typedef void (__cdecl * _CRC32_Calc8)(UInt32 * out, UInt64 data);
 extern const _CRC32_Calc8 CRC32_Calc8;
 
 template <typename T> UInt32 GetHash(T* key) { STATIC_ASSERT(false); }
-template <> inline UInt32 GetHash<UInt32> (UInt32 * key) { UInt32 hash; CRC32_Calc4(&hash, *key); return hash; }
-template <> inline UInt32 GetHash<UInt64> (UInt64 * key) { UInt32 hash; CRC32_Calc8(&hash, *key); return hash; }
+
+template <> inline UInt32 GetHash<UInt32> (UInt32 * key)				{ UInt32 hash; CRC32_Calc4(&hash, *key); return hash; }
+template <> inline UInt32 GetHash<UInt64> (UInt64 * key)				{ UInt32 hash; CRC32_Calc8(&hash, *key); return hash; }
+template <> inline UInt32 GetHash<BSFixedString> (BSFixedString * key)	{ UInt32 hash; CRC32_Calc4(&hash, (UInt32)key->data); return hash; }
 
 // 01C
-template <typename KeyBase, typename Item>
+template <typename Item, typename Key = Item>
 class tHashSet
 {
 	struct _Entry
@@ -478,7 +480,7 @@ class tHashSet
 
 		void Dump(void)
 		{
-			_MESSAGE("\t\titem: %d", (KeyBase)item);
+			_MESSAGE("\t\titem: %d", (Key)item);
 			_MESSAGE("\t\tnext: %08X", next);
 		}
 	};
@@ -515,6 +517,7 @@ class tHashSet
 				result = entry;
 		}
 		while (!result);
+
 		m_freeCount--;
 
 		return result;
@@ -525,8 +528,8 @@ class tHashSet
 		if (! m_entries)
 			return false;
 
-		KeyBase k = (KeyBase)*item;
-		_Entry * targetEntry = GetEntry(GetHash<KeyBase>(&k));
+		Key k = (Key)*item;
+		_Entry * targetEntry = GetEntry(GetHash<Key>(&k));
 
 		// Case 1: Target entry is free
 		if (!targetEntry->next)
@@ -557,8 +560,8 @@ class tHashSet
 		if (!freeEntry)
 			return false;
 
-		k = (KeyBase)targetEntry->item;
-		p = GetEntry(GetHash<KeyBase>((KeyBase*) &k));
+		k = (Key)targetEntry->item;
+		p = GetEntry(GetHash<Key>(&k));
 
 		// Case 3a: Hash collision - insert new entry between target entry and successor
         if (targetEntry == p)
@@ -581,13 +584,14 @@ class tHashSet
 		return true;
 	}
 
+	// Should this rather use memcpy?
 	bool CopyEntry(_Entry * sourceEntry)
 	{
 		if (! m_entries)
 			return false;
 
-		KeyBase k = (KeyBase)sourceEntry->item;
-		_Entry * targetEntry = GetEntry(GetHash<KeyBase>(&k));
+		Key k = (Key)sourceEntry->item;
+		_Entry * targetEntry = GetEntry(GetHash<Key>(&k));
 
 		// Case 1: Target location is unused
 		if (!targetEntry->next)
@@ -602,8 +606,8 @@ class tHashSet
 		// Target location is in use. Either hash collision or bucket overlap.
 
 		_Entry * freeEntry = NextFreeEntry();
-		k = (KeyBase)targetEntry->item;
-		_Entry * p = GetEntry(GetHash<KeyBase>(&k));
+		k = (Key)targetEntry->item;
+		_Entry * p = GetEntry(GetHash<Key>(&k));
 
 		// Case 2a: Hash collision - insert new entry between target entry and successor
 		if (targetEntry == p)
@@ -620,7 +624,8 @@ class tHashSet
 			p = p->next;
 
 		// Source entry takes position of target entry - not completely understood yet
-		memcpy_s(freeEntry, sizeof(_Entry), targetEntry, sizeof(_Entry));
+		freeEntry->item = targetEntry->item;
+		freeEntry->next = targetEntry->next;
 		p->next = freeEntry;
 		targetEntry->item = sourceEntry->item;
 		targetEntry->next = m_eolPtr;
@@ -673,13 +678,13 @@ public:
 
 		void Forward(bool inc)
 		{
-			if (IsDone())
+			if (m_cur == m_end)
 				return;
 
 			if (inc)
 				m_cur++;
 
-			while (!IsDone() && m_cur->IsFree())
+			while (m_cur != m_end && m_cur->IsFree())
 				m_cur++;
 		}
 
@@ -687,38 +692,39 @@ public:
 
 		Iterator(_Entry * start, _Entry * end) : m_cur(start), m_end(end)
 		{
-			if (!m_cur)
-			{
-				m_end = NULL;
+			if (m_cur == m_end)
 				return;
-			}
 				
 			Forward(false);
 		}
 
-		Iterator operator++()		{ Forward(true); return *this; }
-		const Item * operator->()	{ return m_cur ? const_cast<const Item*>(&m_cur->item) : NULL; }
-		const Item * operator*()	{ return m_cur ? const_cast<const Item*>(&m_cur->item) : NULL; }
-		Item * Get()				{ return m_cur ? &m_cur->item : NULL; }
-		bool IsDone()				{ return m_cur >= m_end; }
+		Iterator		operator++()	{ Forward(true); return *this; }
+		const Item *	operator->()	{ return m_cur ? const_cast<const Item*>(&m_cur->item) : NULL; }
+		const Item *	operator*()		{ return m_cur ? const_cast<const Item*>(&m_cur->item) : NULL; }
+		Item *			Get()			{ return m_cur ? &m_cur->item : NULL; }
 	};
 	
-	const Iterator Entries() const
+	const Iterator Begin() const
 	{
 		return Iterator(m_entries, (_Entry*) (((UInt32) m_entries) + sizeof(_Entry) * m_size));
 	}
 
-	template <typename KeyType>
-	Item * Find(KeyType key) const
+	const Iterator End() const
+	{
+		_Entry * end = (_Entry*) (((UInt32) m_entries) + sizeof(_Entry) * m_size);
+		return Iterator(end, end);
+	}
+
+	Item * Find(Key * key) const
 	{
 		if (!m_entries)
 			return NULL;
 
-		_Entry * entry = GetEntry(GetHash<KeyBase>((KeyBase*)&key));
+		_Entry * entry = GetEntry(GetHash<Key>(key));
 		if (! entry->next)
 			return NULL;
 
-		while (!(entry->item == key))
+		while (!(entry->item == *key))
 		{
 			entry = entry->next;
 			if (entry == m_eolPtr)
@@ -734,18 +740,17 @@ public:
 			Grow();
 	}
 
-	template <typename KeyType>
-	bool Remove(KeyType key)
+	bool Remove(Key * key)
 	{
 		if ( !m_entries)
 			return false;
 
-		_Entry * entry = GetEntry(GetHash<KeyBase>((KeyBase*)&key));
+		_Entry * entry = GetEntry(GetHash<Key>(key));
 		if (! entry->next)
 			return NULL;
 
 		_Entry * prevEntry = NULL;
-		while (! (entry->item == key))
+		while (! (entry->item == *key))
 		{
 			prevEntry = entry;
 			entry = entry->next;
@@ -755,7 +760,7 @@ public:
 
 		// Remove tail?
 		_Entry * nextEntry = entry->next;
-		if ( nextEntry == m_eolPtr )
+		if (nextEntry == m_eolPtr)
 		{
 			if (prevEntry)
 				prevEntry->next = m_eolPtr;
@@ -763,8 +768,8 @@ public:
 		}
 		else
 		{
-			entry->next = NULL;
-			memcpy_s(entry, sizeof(_Entry), nextEntry, sizeof(_Entry));
+			entry->item = nextEntry->item;
+			entry->next = nextEntry->item;;
 			nextEntry->next = NULL;
 		}
 
@@ -809,4 +814,4 @@ template <typename Key, typename Item>
 typename tHashSet<Key,Item>::_Entry tHashSet<Key,Item>::sentinel = tHashSet<Key,Item>::_Entry();
 
 
-typedef tHashSet<UInt64,UInt64> HandleTable;
+typedef tHashSet<UInt64> HandleSet;
