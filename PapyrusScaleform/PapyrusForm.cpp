@@ -7,7 +7,6 @@
 #include "PapyrusEvents.h"
 
 #include <map>
-#include <set>
 
 namespace papyrusForm
 {
@@ -175,13 +174,12 @@ namespace papyrusForm
 
 		UInt64	handle = policy->Create(thisForm->formType, (void *)thisForm);
 
-		// This probably prevents object from being unloaded once regged for something as described in the wiki.
+		g_menuOpenCloseRegs.Acquire();
+		if (g_menuOpenCloseRegs.data[menuName->data].insert(handle).second)
+			// This may prevent an object from being unloaded once regged for something as described in the wiki?
 		// Would have to check if RevertGlobalData cares about this.
-		// policy->AddRef(handle);
-
-		g_menuOpenCloseRegHolder.Acquire();
-		g_menuOpenCloseRegHolder.data[menuName->data].insert(handle);
-		g_menuOpenCloseRegHolder.Release();
+			 policy->AddRef(handle);
+		g_menuOpenCloseRegs.Release();
 	}
 
 	void UnregisterFromMenuOpenClose(TESForm * thisForm, UInt32 menuID)
@@ -199,9 +197,10 @@ namespace papyrusForm
 
 		UInt64	handle = policy->Create(thisForm->formType, (void *)thisForm);
 
-		g_menuOpenCloseRegHolder.Acquire();
-		g_menuOpenCloseRegHolder.data[menuName->data].erase(handle);
-		g_menuOpenCloseRegHolder.Release();
+		g_menuOpenCloseRegs.Acquire();
+		if (g_menuOpenCloseRegs.data[menuName->data].erase(handle))
+			policy->Release(handle);
+		g_menuOpenCloseRegs.Release();
 	}
 
 	void UnregisterFromAllMenuOpenClose(TESForm * thisForm)
@@ -215,10 +214,11 @@ namespace papyrusForm
 
 		UInt64	handle = policy->Create(thisForm->formType, (void *)thisForm);
 
-		g_menuOpenCloseRegHolder.Acquire();
-		for(MenuOpenCloseRegTable::iterator iter = g_menuOpenCloseRegHolder.data.begin(); iter != g_menuOpenCloseRegHolder.data.end(); ++iter)
-			iter->second.erase(handle);
-		g_menuOpenCloseRegHolder.Release();
+		g_menuOpenCloseRegs.Acquire();
+		for (NameRegMap::iterator iter = g_menuOpenCloseRegs.data.begin(); iter != g_menuOpenCloseRegs.data.end(); ++iter)
+			if (iter->second.erase(handle))
+				policy->Release(handle);
+		g_menuOpenCloseRegs.Release();
 	}
 }
 

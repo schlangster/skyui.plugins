@@ -109,19 +109,20 @@ private:
 	UInt16	m_bufLen;	// 06
 };
 
+// 0C
 template <class T>
 class tArray
 {
 public:
 	struct Array {
-		T* entries;
-		UInt32 unk4;
+		T*		entries;
+		UInt32	capacity;
 
-		Array() : entries(NULL), unk4(0) {};
+		Array() : entries(NULL), capacity(0) {};
 	};
 
-	Array arr;
-	UInt32 count;
+	Array arr;		// 00
+	UInt32 count;	// 08
 	
 	tArray() : count(0) {};
 	
@@ -449,6 +450,21 @@ public:
 			return -1;
 	}
 
+	class AcceptEqual {
+	public:
+		Item * item;
+
+		AcceptEqual(Item * a_item) : item(a_item) {}
+
+		bool Accept(Item * a_item) {
+			return *item == *a_item;
+		}
+	};
+
+	bool Contains(Item * item) const
+	{
+		return Find(AcceptEqual(item)) != NULL;
+	}
 };
 
 STATIC_ASSERT(sizeof(tList<void *>) == 0x8);
@@ -467,6 +483,7 @@ template <> inline UInt32 GetHash<UInt64> (UInt64 * key)				{ UInt32 hash; CRC32
 template <> inline UInt32 GetHash<BSFixedString> (BSFixedString * key)	{ UInt32 hash; CRC32_Calc4(&hash, (UInt32)key->data); return hash; }
 
 // 01C
+// How to default/copy-construct in insert/grow still needs some work for items that have an overloaded assignment operator (like STL-types)
 template <typename Item, typename Key = Item>
 class tHashSet
 {
@@ -523,10 +540,11 @@ class tHashSet
 		return result;
 	}
 
-	bool Insert(Item * item)
+	// 0: Out of space, -1: Already included, 1: Success
+	SInt32 Insert(Item * item)
 	{
 		if (! m_entries)
-			return false;
+			return 0;
 
 		Key k = (Key)*item;
 		_Entry * targetEntry = GetEntry(GetHash<Key>(&k));
@@ -538,7 +556,7 @@ class tHashSet
 			targetEntry->next = m_eolPtr;
 			--m_freeCount;
 
-			return true;
+			return 1;
 		}
 
 		// -- Target entry is already in use
@@ -548,7 +566,7 @@ class tHashSet
 		do
 		{
 			if (p->item == *item)
-				return true;
+				return -1;
 			p = p->next;
 		}
 		while (p != m_eolPtr);
@@ -558,7 +576,7 @@ class tHashSet
 		_Entry * freeEntry = NextFreeEntry();
 		// No more space?
 		if (!freeEntry)
-			return false;
+			return 0;
 
 		k = (Key)targetEntry->item;
 		p = GetEntry(GetHash<Key>(&k));
@@ -570,7 +588,7 @@ class tHashSet
 			freeEntry->next = targetEntry->next;
 			targetEntry->next = freeEntry;
 
-			return true;
+			return 1;
         }
 		// Case 3b: Bucket overlap
 		while (p->next != targetEntry)
@@ -581,7 +599,7 @@ class tHashSet
 		targetEntry->item = *item;
 		targetEntry->next = m_eolPtr;
 
-		return true;
+		return 1;
 	}
 
 	// Should this rather use memcpy?
@@ -671,50 +689,6 @@ public:
 	UInt32	FreeCount() const	{ return m_freeCount; }
 	UInt32	FillCount() const	{ return m_size - m_freeCount; }
 
-	class Iterator
-	{
-		_Entry * m_cur;
-		_Entry * m_end;
-
-		void Forward(bool inc)
-		{
-			if (m_cur == m_end)
-				return;
-
-			if (inc)
-				m_cur++;
-
-			while (m_cur != m_end && m_cur->IsFree())
-				m_cur++;
-		}
-
-	public:
-
-		Iterator(_Entry * start, _Entry * end) : m_cur(start), m_end(end)
-		{
-			if (m_cur == m_end)
-				return;
-				
-			Forward(false);
-		}
-
-		Iterator		operator++()	{ Forward(true); return *this; }
-		const Item *	operator->()	{ return m_cur ? const_cast<const Item*>(&m_cur->item) : NULL; }
-		const Item *	operator*()		{ return m_cur ? const_cast<const Item*>(&m_cur->item) : NULL; }
-		Item *			Get()			{ return m_cur ? &m_cur->item : NULL; }
-	};
-	
-	const Iterator Begin() const
-	{
-		return Iterator(m_entries, (_Entry*) (((UInt32) m_entries) + sizeof(_Entry) * m_size));
-	}
-
-	const Iterator End() const
-	{
-		_Entry * end = (_Entry*) (((UInt32) m_entries) + sizeof(_Entry) * m_size);
-		return Iterator(end, end);
-	}
-
 	Item * Find(Key * key) const
 	{
 		if (!m_entries)
@@ -734,10 +708,14 @@ public:
 		return &entry->item;
 	}
 
-	void Add(Item * item)
+	bool Add(Item * item)
 	{
-		while (!Insert(item))
+		UInt32 status = 0;
+
+		for (status = Insert(item); !status; status = Insert(item))
 			Grow();
+
+		return status == 1;
 	}
 
 	bool Remove(Key * key)
@@ -769,7 +747,7 @@ public:
 		else
 		{
 			entry->item = nextEntry->item;
-			entry->next = nextEntry->item;;
+			entry->next = nextEntry->next;
 			nextEntry->next = NULL;
 		}
 
@@ -792,6 +770,33 @@ public:
 		m_freeCount = m_freeOffset = m_size;
 	}
 
+	template <typename T>
+	void ForEach(T& functor)
+	{
+		if (!m_entries)
+			return;
+
+		_Entry * cur	= m_entries;
+		_Entry * end	= (_Entry*) (((UInt32) m_entries) + sizeof(_Entry) * m_size);
+
+		if (cur == end)
+			return;
+
+		if (cur->IsFree())
+		{
+			do cur++; while (cur != end && cur->IsFree());
+		}
+
+		do
+		{
+			if (! functor(&cur->item))
+				return;
+
+			do cur++; while (cur != end && cur->IsFree());
+		} while (cur != end);
+		
+	}
+
 	void Dump(void)
 	{
 		_MESSAGE("tHashSet:");
@@ -812,6 +817,3 @@ STATIC_ASSERT(sizeof(tHashSet<void*,void*>) == 0x1C);
 
 template <typename Key, typename Item>
 typename tHashSet<Key,Item>::_Entry tHashSet<Key,Item>::sentinel = tHashSet<Key,Item>::_Entry();
-
-
-typedef tHashSet<UInt64> HandleSet;
