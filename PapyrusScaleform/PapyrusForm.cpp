@@ -196,6 +196,19 @@ namespace papyrusForm
 		g_modCallbackRegs.Register(eventName.data, thisForm, &params);
 	}
 
+	void UnregisterFromModEvent(TESForm * thisForm, BSFixedString eventName)
+	{
+		if (!eventName.data)
+			return;
+
+		g_modCallbackRegs.Unregister(eventName.data, thisForm);
+	}
+
+	void UnregisterFromAllModEvents(TESForm * thisForm)
+	{
+		g_modCallbackRegs.UnregisterFromAll(thisForm);
+	}
+
 	void SendModEvent(TESForm * thisForm, BSFixedString eventName)
 	{
 		if (!eventName.data)
@@ -260,4 +273,10 @@ void papyrusForm::RegisterFuncs(VMClassRegistry* registry)
 
 	registry->RegisterFunction(
 		new NativeFunction1 <TESForm, void, BSFixedString> ("SendModEvent", "Form", papyrusForm::SendModEvent, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction1 <TESForm, void, BSFixedString> ("UnregisterFromModEvent", "Form", papyrusForm::UnregisterFromModEvent, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction0 <TESForm, void> ("UnregisterFromAllModEvents", "Form", papyrusForm::UnregisterFromAllModEvents, registry));
 }

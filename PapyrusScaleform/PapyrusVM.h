@@ -347,20 +347,3 @@ public:
 
 	virtual bool	Copy(Output * dst) = 0;
 };
-
-class OneIntArg : public IFunctionArguments
-{
-public:
-	OneIntArg(UInt32 _data) :data(_data) { }
-
-	virtual bool	Copy(Output * dst)
-	{
-		dst->Resize(1);
-		dst->Get(0)->SetInt(data);
-
-		return true;
-	}
-
-private:
-	UInt32	data;
-};

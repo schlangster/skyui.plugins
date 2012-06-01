@@ -1,6 +1,5 @@
 #pragma once
 
-#include "skse/GameTypes.h"
 #include "GameTypes.h"
 #include "GameEvents.h"
 #include "GameMenus.h"
@@ -26,10 +25,12 @@ namespace papyrusForm
 
 	void UpdateKeys(UInt8 * data);
 
-	void RegisterForMenuOpenClose(TESForm * thisForm, UInt32 menuID);
-	void UnregisterForMenuOpenClose(TESForm * thisForm, UInt32 menuID);
-	void UnregisterForAllMenuOpenClose(TESForm * thisForm);
+	void RegisterForMenu(TESForm * thisForm, UInt32 menuID);
+	void UnregisterFromMenu(TESForm * thisForm, UInt32 menuID);
+	void UnregisterFromAllMenus(TESForm * thisForm);
 
 	void RegisterForModEvent(TESForm * thisForm, BSFixedString eventName, BSFixedString callbackName);
+	void UnregisterFromModEvent(TESForm * thisForm, BSFixedString eventName);
+	void UnregisterFromAllModEvents(TESForm * thisForm);
 	void SendModEvent(TESForm * thisForm, BSFixedString eventName);
 }
