@@ -295,14 +295,14 @@ public:
 	{
 		ASSERT(args->numArgs >= 1);
 
-		const char	* menuName = args->args[0].GetString();
+		const char	* eventName = args->args[0].GetString();
 
 #if _DEBUG
-		_MESSAGE("scaleform: send mod event (%s)", menuName);
+		_MESSAGE("scaleform: send mod event (%s)", eventName);
 #endif
 
-		SKSEModCallbackEvent evn;
-		evn.eventName = BSFixedString(menuName);
+		BSFixedString arg(eventName);
+		SKSEModCallbackEvent evn(arg);
 		g_modCallbackEventDispatcher.SendEvent(&evn);
 	}
 };

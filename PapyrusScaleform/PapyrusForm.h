@@ -25,8 +25,8 @@ namespace papyrusForm
 
 	void UpdateKeys(UInt8 * data);
 
-	void RegisterForMenu(TESForm * thisForm, UInt32 menuID);
-	void UnregisterFromMenu(TESForm * thisForm, UInt32 menuID);
+	void RegisterForMenu(TESForm * thisForm, BSFixedString menuName);
+	void UnregisterFromMenu(TESForm * thisForm, BSFixedString menuName);
 	void UnregisterFromAllMenus(TESForm * thisForm);
 
 	void RegisterForModEvent(TESForm * thisForm, BSFixedString eventName, BSFixedString callbackName);

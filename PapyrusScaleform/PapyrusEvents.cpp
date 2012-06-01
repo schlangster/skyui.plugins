@@ -6,9 +6,9 @@
 
 //// Global instances
 
-RegistrationMapHolder<const char*>							g_menuOpenCloseRegs;
+RegistrationMapHolder<BSFixedString>						g_menuOpenCloseRegs;
 RegistrationMapHolder<UInt32>								g_inputEventRegs;
-RegistrationMapHolder<const char*,ModCallbackParameters>	g_modCallbackRegs;
+RegistrationMapHolder<BSFixedString,ModCallbackParameters>	g_modCallbackRegs;
 
 EventDispatcher<SKSEModCallbackEvent> g_modCallbackEventDispatcher;
 
@@ -17,12 +17,12 @@ SKSEEventHandler	g_skseEventHandler;
 
 //// Generic functors
 
-template <typename T> void SetVMValue(VMValue * val, T arg)					{ STATIC_ASSERT(false); }
+template <typename T> void SetVMValue(VMValue * val, T arg)						{ STATIC_ASSERT(false); }
 
-template <> void SetVMValue<bool> (VMValue * val, bool arg)					{ val->SetBool(arg); }
-template <> void SetVMValue<SInt32> (VMValue * val, SInt32 arg)				{ val->SetInt(arg); }
-template <> void SetVMValue<float> (VMValue * val, float arg)				{ val->SetFloat(arg); }
-template <> void SetVMValue<const char*> (VMValue * val, const char* arg)	{ val->SetString(arg); }
+template <> void SetVMValue<bool> (VMValue * val, bool arg)						{ val->SetBool(arg); }
+template <> void SetVMValue<SInt32> (VMValue * val, SInt32 arg)					{ val->SetInt(arg); }
+template <> void SetVMValue<float> (VMValue * val, float arg)					{ val->SetFloat(arg); }
+template <> void SetVMValue<BSFixedString> (VMValue * val, BSFixedString arg)	{ val->SetString(arg.data); }
 
 
 template <typename T1>
@@ -84,13 +84,13 @@ private:
 class ModCallbackEventFunctor : public IFunctionArguments
 {
 public:
-	ModCallbackEventFunctor(BSFixedString * a_eventName)
-		: eventName(a_eventName) {}
+	ModCallbackEventFunctor(BSFixedString & a_eventName)
+		: eventName(a_eventName.data) {}
 
 	virtual bool	Copy(Output * dst)
 	{
 		dst->Resize(1);
-		dst->Get(0)->SetString(eventName->data);
+		dst->Get(0)->SetString(eventName.data);
 
 		return true;
 	}
@@ -102,7 +102,7 @@ public:
 	}
 
 private:
-	BSFixedString	* eventName;
+	BSFixedString	eventName;
 };
 
 
@@ -110,14 +110,15 @@ private:
 
 EventResult SKSEEventHandler::ReceiveEvent(MenuOpenCloseEvent * evn, EventDispatcher<MenuOpenCloseEvent> * dispatcher)
 {
+#if _DEBUG
 	_MESSAGE("Received internal MenuOpenCloseEvent. Name: %s, Opening: %d", evn->menuName, evn->opening);
+#endif
 
 	BSFixedString	eventName =		evn->opening ? BSFixedString("OnMenuOpen") : BSFixedString("OnMenuClose");
-	const char *	menuNameData =	evn->menuName.data;
 
 	g_menuOpenCloseRegs.ForEach(
-		menuNameData,
-		EventQueueFunctor1<const char*>(&eventName, menuNameData)
+		evn->menuName,
+		EventQueueFunctor1<BSFixedString>(&eventName, evn->menuName)
 	);
 
 	return kEvent_Continue;
@@ -157,7 +158,7 @@ EventResult	SKSEEventHandler::ReceiveEvent(InputEvent ** evns, EventDispatcher<I
 
 				if (!keyState[t->scanCode])
 				{
-					_MESSAGE("KeyDown: %c", t->scanCode);
+					//_MESSAGE("KeyDown: %c", t->scanCode);
 					g_inputEventRegs.ForEach(
 						t->scanCode,
 						EventQueueFunctor1<SInt32>(&BSFixedString("OnKeyDown"), (SInt32)t->scanCode)
@@ -214,8 +215,8 @@ EventResult SKSEEventHandler::ReceiveEvent(SKSEModCallbackEvent * evn, EventDisp
 	const char * eventNameData = evn->eventName.data;
 
 	g_modCallbackRegs.ForEach(
-		eventNameData,
-		ModCallbackEventFunctor(&evn->eventName)
+		evn->eventName,
+		ModCallbackEventFunctor(evn->eventName)
 	);
 
 	return kEvent_Continue;

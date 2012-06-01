@@ -1,9 +1,8 @@
 #include "GameMenus.h"
 
-GFxMovieView * MenuManager::GetMovieView(UInt32 menuID)
+GFxMovieView * MenuManager::GetMovieView(BSFixedString * menuName)
 {
-	BSFixedString * menuName = LookupMenuName(menuID);
-	if (!menuName || !menuName->data)
+	if (!menuName->data)
 		return NULL;
 
 	MenuTableItem * item = menuTable.Find(menuName);

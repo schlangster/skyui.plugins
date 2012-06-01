@@ -108,12 +108,12 @@ namespace papyrusForm
 
 	void RegisterForKey(TESForm * thisForm, UInt32 key)
 	{
-		g_inputEventRegs.Register(key, thisForm);
+		g_inputEventRegs.Register(thisForm, key);
 	}
 
 	void UnregisterFromKey(TESForm * thisForm, UInt32 key)
 	{
-		g_inputEventRegs.Unregister(key, thisForm);
+		g_inputEventRegs.Unregister(thisForm, key);
 	}
 
 	void UnregisterFromAllKeys(TESForm * thisForm)
@@ -152,10 +152,9 @@ namespace papyrusForm
 		}*/
 	}
 
-	void RegisterForMenu(TESForm * thisForm, UInt32 menuID)
+	void RegisterForMenu(TESForm * thisForm, BSFixedString menuName)
 	{
-		BSFixedString * menuName = MenuManager::LookupMenuName(menuID);
-		if (!menuName)
+		if (!menuName.data)
 			return;
 
 		// Will only be added once. TODO move this somewhere else.
@@ -165,16 +164,15 @@ namespace papyrusForm
 		if (*g_inputEventDispatcher)
 			(*g_inputEventDispatcher)->AddEventSink(&g_skseEventHandler);
 
-		g_menuOpenCloseRegs.Register(menuName->data, thisForm);
+		g_menuOpenCloseRegs.Register(thisForm, menuName);
 	}
 
-	void UnregisterFromMenu(TESForm * thisForm, UInt32 menuID)
+	void UnregisterFromMenu(TESForm * thisForm, BSFixedString menuName)
 	{
-		BSFixedString * menuName = MenuManager::LookupMenuName(menuID);
-		if (!menuName)
+		if (!menuName.data)
 			return;
 
-		g_menuOpenCloseRegs.Unregister(menuName->data, thisForm);
+		g_menuOpenCloseRegs.Unregister(thisForm, menuName);
 	}
 
 	void UnregisterFromAllMenus(TESForm * thisForm)
@@ -191,9 +189,9 @@ namespace papyrusForm
 		g_modCallbackEventDispatcher.AddEventSink(&g_skseEventHandler);
 
 		ModCallbackParameters params;
-		params.callbackName = BSFixedString(callbackName.data);
+		params.callbackName = callbackName;
 
-		g_modCallbackRegs.Register(eventName.data, thisForm, &params);
+		g_modCallbackRegs.Register(thisForm, eventName, &params);
 	}
 
 	void UnregisterFromModEvent(TESForm * thisForm, BSFixedString eventName)
@@ -201,7 +199,7 @@ namespace papyrusForm
 		if (!eventName.data)
 			return;
 
-		g_modCallbackRegs.Unregister(eventName.data, thisForm);
+		g_modCallbackRegs.Unregister(thisForm, eventName);
 	}
 
 	void UnregisterFromAllModEvents(TESForm * thisForm)
@@ -214,8 +212,7 @@ namespace papyrusForm
 		if (!eventName.data)
 			return;
 
-		SKSEModCallbackEvent evn;
-		evn.eventName = BSFixedString(eventName.data);
+		SKSEModCallbackEvent evn(eventName);
 		g_modCallbackEventDispatcher.SendEvent(&evn);
 	}
 
@@ -260,10 +257,10 @@ void papyrusForm::RegisterFuncs(VMClassRegistry* registry)
 		new NativeFunction0 <TESForm, void> ("UnregisterFromAllKeys", "Form", papyrusForm::UnregisterFromAllKeys, registry));
 
 	registry->RegisterFunction(
-		new NativeFunction1 <TESForm, void, UInt32> ("RegisterForMenu", "Form", papyrusForm::RegisterForMenu, registry));
+		new NativeFunction1 <TESForm, void, BSFixedString> ("RegisterForMenu", "Form", papyrusForm::RegisterForMenu, registry));
 
 	registry->RegisterFunction(
-		new NativeFunction1 <TESForm, void, UInt32> ("UnregisterFromMenu", "Form", papyrusForm::UnregisterFromMenu, registry));
+		new NativeFunction1 <TESForm, void, BSFixedString> ("UnregisterFromMenu", "Form", papyrusForm::UnregisterFromMenu, registry));
 
 	registry->RegisterFunction(
 		new NativeFunction0 <TESForm, void> ("UnregisterFromAllMenus", "Form", papyrusForm::UnregisterFromAllMenus, registry));

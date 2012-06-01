@@ -45,7 +45,7 @@ class RegistrationMapHolder : public SafeDataHolder<std::map<K,std::set<EventReg
 
 public:
 
-	void Register(K& key, TESForm * form, D * params = NULL)
+	void Register(TESForm * form, K& key, D * params = NULL)
 	{
 		VMClassRegistry		* registry =	(*g_skyrimVM)->GetClassRegistry();
 		IObjectHandlePolicy	* policy =		registry->GetHandlePolicy();
@@ -63,7 +63,7 @@ public:
 		m_lock.Release();
 	}
 
-	void Unregister(K& key, TESForm * form)
+	void Unregister(TESForm * form, K& key)
 	{
 		VMClassRegistry		* registry =	(*g_skyrimVM)->GetClassRegistry();
 		IObjectHandlePolicy	* policy =		registry->GetHandlePolicy();
@@ -141,16 +141,17 @@ struct ModCallbackParameters
 	BSFixedString callbackName;
 };
 
-// Should use BSFixedString for keys instead since const char * might be released otherwise?
-// So far I didn't have the problem because menu names are stored permanently
-extern RegistrationMapHolder<const char*>						g_menuOpenCloseRegs;
-extern RegistrationMapHolder<UInt32>							g_inputEventRegs;
-extern RegistrationMapHolder<const char*,ModCallbackParameters>	g_modCallbackRegs;
+extern RegistrationMapHolder<BSFixedString>							g_menuOpenCloseRegs;
+extern RegistrationMapHolder<UInt32>								g_inputEventRegs;
+extern RegistrationMapHolder<BSFixedString,ModCallbackParameters>	g_modCallbackRegs;
 
 
 struct SKSEModCallbackEvent
 {
 	BSFixedString	eventName;
+
+	SKSEModCallbackEvent(BSFixedString a_eventName) :
+		eventName(a_eventName.data) {}
 };
 
 template <>
@@ -165,14 +166,12 @@ extern EventDispatcher<SKSEModCallbackEvent> g_modCallbackEventDispatcher;
 
 
 class SKSEEventHandler :
-//public BSTEventSink <TESSleepStartEvent>,
 	public BSTEventSink <MenuOpenCloseEvent>,
 	public BSTEventSink <InputEvent>,
 	public BSTEventSink <SKSEModCallbackEvent>
 {
 
 public:
-	//virtual EventResult	ReceiveEvent(TESSleepStartEvent * evn, EventDispatcher<TESSleepStartEvent> * dispatcher);
 	virtual EventResult		ReceiveEvent(MenuOpenCloseEvent * evn, EventDispatcher<MenuOpenCloseEvent> * dispatcher);
 	virtual EventResult		ReceiveEvent(InputEvent ** evns, EventDispatcher<InputEvent,InputEvent*> * dispatcher);
 	virtual	EventResult		ReceiveEvent(SKSEModCallbackEvent * evn, EventDispatcher<SKSEModCallbackEvent> * dispatcher);

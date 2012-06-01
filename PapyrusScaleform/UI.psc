@@ -70,9 +70,9 @@ Function SetString(string menuName, string target, string value) global native
 ;		float	height	= UI.GetNumber("Magic Menu", "_root.Menu_mc._height")
 ;		string	myTest	= UI.GetString("Favorites Menu", "_global.a.b.c.test")
 ;
-bool Function GetBool(string menuName, string target) global native
-float Function GetNumber(string menuName, string target) global native
-string Function GetString(string menuName, string target) global native
+bool	Function GetBool(string menuName, string target) global native
+float	Function GetNumber(string menuName, string target) global native
+string	Function GetString(string menuName, string target) global native
 
 
 ; Invoke the ActionScript function at given target location,
@@ -92,7 +92,10 @@ string Function GetString(string menuName, string target) global native
 ;		UI.Invoke("Inventory Menu", "_root.Menu_mc.ItemsList.func1")
 ;
 Function Invoke(string menuName, string target) global native
+
 Function InvokeBool(string menuName, string target, bool arg) global native
+
 Function InvokeNumber(string menuName, string target, float arg) global native
+
 Function InvokeString(string menuName, string target, string arg) global native
 
