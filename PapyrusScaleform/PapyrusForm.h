@@ -29,4 +29,7 @@ namespace papyrusForm
 	void RegisterForMenuOpenClose(TESForm * thisForm, UInt32 menuID);
 	void UnregisterForMenuOpenClose(TESForm * thisForm, UInt32 menuID);
 	void UnregisterForAllMenuOpenClose(TESForm * thisForm);
+
+	void RegisterForModEvent(TESForm * thisForm, BSFixedString eventName, BSFixedString callbackName);
+	void SendModEvent(TESForm * thisForm, BSFixedString eventName);
 }

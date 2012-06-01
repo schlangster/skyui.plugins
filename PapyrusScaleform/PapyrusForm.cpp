@@ -106,25 +106,24 @@ namespace papyrusForm
 		return NULL;
 	}
 
-	typedef std::set <UInt64>				HandleList;
-	typedef std::map <UInt32, HandleList>	RegisteredKeyMap;
-
-	// ### TODO: clear this on unload
-	RegisteredKeyMap	g_regKeyMap;
-
 	void RegisterForKey(TESForm * thisForm, UInt32 key)
 	{
-		VMClassRegistry		* registry =	(*g_skyrimVM)->GetClassRegistry();
-		IObjectHandlePolicy	* policy =		registry->GetHandlePolicy();
+		g_inputEventRegs.Register(key, thisForm);
+	}
 
-		UInt64	handle = policy->Create(thisForm->formType, (void *)thisForm);
+	void UnregisterFromKey(TESForm * thisForm, UInt32 key)
+	{
+		g_inputEventRegs.Unregister(key, thisForm);
+	}
 
-		g_regKeyMap[key].insert(handle);
+	void UnregisterFromAllKeys(TESForm * thisForm)
+	{
+		g_inputEventRegs.UnregisterFromAll(thisForm);
 	}
 
 	void UpdateKeys(UInt8 * data)
 	{
-		static UInt8	oldState[0x100] = { 0 };
+		/*static UInt8	oldState[0x100] = { 0 };
 
 		if(!*g_skyrimVM) return;
 
@@ -150,76 +149,63 @@ namespace papyrusForm
 			}
 
 			oldState[i] = data[i];
-		}
+		}*/
 	}
 
-	void RegisterForMenuOpenClose(TESForm * thisForm, UInt32 menuID)
+	void RegisterForMenu(TESForm * thisForm, UInt32 menuID)
 	{
 		BSFixedString * menuName = MenuManager::LookupMenuName(menuID);
 		if (!menuName)
-			return;
-
-		MenuManager * mm = MenuManager::GetSingleton();
-		if (!mm)
 			return;
 
 		// Will only be added once. TODO move this somewhere else.
+		MenuManager * mm = MenuManager::GetSingleton();
+		if (mm)
 		mm->MenuOpenCloseEventDispatcher()->AddEventSink(&g_skseEventHandler);
-
 		if (*g_inputEventDispatcher)
 			(*g_inputEventDispatcher)->AddEventSink(&g_skseEventHandler);
 
-		VMClassRegistry		* registry =	(*g_skyrimVM)->GetClassRegistry();
-		IObjectHandlePolicy	* policy =		registry->GetHandlePolicy();
-
-		UInt64	handle = policy->Create(thisForm->formType, (void *)thisForm);
-
-		g_menuOpenCloseRegs.Acquire();
-		if (g_menuOpenCloseRegs.data[menuName->data].insert(handle).second)
-			// This may prevent an object from being unloaded once regged for something as described in the wiki?
-		// Would have to check if RevertGlobalData cares about this.
-			 policy->AddRef(handle);
-		g_menuOpenCloseRegs.Release();
+		g_menuOpenCloseRegs.Register(menuName->data, thisForm);
 	}
 
-	void UnregisterFromMenuOpenClose(TESForm * thisForm, UInt32 menuID)
+	void UnregisterFromMenu(TESForm * thisForm, UInt32 menuID)
 	{
 		BSFixedString * menuName = MenuManager::LookupMenuName(menuID);
 		if (!menuName)
 			return;
 
-		MenuManager * mm = MenuManager::GetSingleton();
-		if (!mm)
-			return;
-
-		VMClassRegistry		* registry =	(*g_skyrimVM)->GetClassRegistry();
-		IObjectHandlePolicy	* policy =		registry->GetHandlePolicy();
-
-		UInt64	handle = policy->Create(thisForm->formType, (void *)thisForm);
-
-		g_menuOpenCloseRegs.Acquire();
-		if (g_menuOpenCloseRegs.data[menuName->data].erase(handle))
-			policy->Release(handle);
-		g_menuOpenCloseRegs.Release();
+		g_menuOpenCloseRegs.Unregister(menuName->data, thisForm);
 	}
 
-	void UnregisterFromAllMenuOpenClose(TESForm * thisForm)
+	void UnregisterFromAllMenus(TESForm * thisForm)
 	{
-		MenuManager * mm = MenuManager::GetSingleton();
-		if (!mm)
+		g_menuOpenCloseRegs.UnregisterFromAll(thisForm);
+	}
+
+	void RegisterForModEvent(TESForm * thisForm, BSFixedString eventName, BSFixedString callbackName)
+	{
+		if (!eventName.data || !callbackName.data)
 			return;
 
-		VMClassRegistry		* registry =	(*g_skyrimVM)->GetClassRegistry();
-		IObjectHandlePolicy	* policy =		registry->GetHandlePolicy();
+		// TODO
+		g_modCallbackEventDispatcher.AddEventSink(&g_skseEventHandler);
 
-		UInt64	handle = policy->Create(thisForm->formType, (void *)thisForm);
+		ModCallbackParameters params;
+		params.callbackName = BSFixedString(callbackName.data);
 
-		g_menuOpenCloseRegs.Acquire();
-		for (NameRegMap::iterator iter = g_menuOpenCloseRegs.data.begin(); iter != g_menuOpenCloseRegs.data.end(); ++iter)
-			if (iter->second.erase(handle))
-				policy->Release(handle);
-		g_menuOpenCloseRegs.Release();
+		g_modCallbackRegs.Register(eventName.data, thisForm, &params);
 	}
+
+	void SendModEvent(TESForm * thisForm, BSFixedString eventName)
+	{
+		if (!eventName.data)
+			return;
+
+		SKSEModCallbackEvent evn;
+		evn.eventName = BSFixedString(eventName.data);
+		g_modCallbackEventDispatcher.SendEvent(&evn);
+	}
+
 }
 
 #include "PapyrusVM.h"
@@ -251,15 +237,27 @@ void papyrusForm::RegisterFuncs(VMClassRegistry* registry)
 	registry->RegisterFunction(
 		new NativeFunction1 <TESForm, BGSKeyword *, UInt32> ("GetNthKeyword", "Form", papyrusForm::GetNthKeyword, registry));
 
-	//registry->RegisterFunction(
-	//	new NativeFunction1 <TESForm, void, UInt32> ("RegisterForKey", "Form", papyrusForm::RegisterForKey, registry));
+	registry->RegisterFunction(
+		new NativeFunction1 <TESForm, void, UInt32> ("RegisterForKey", "Form", papyrusForm::RegisterForKey, registry));
 
 	registry->RegisterFunction(
-		new NativeFunction1 <TESForm, void, UInt32> ("RegisterForMenuOpenClose", "Form", papyrusForm::RegisterForMenuOpenClose, registry));
+		new NativeFunction1 <TESForm, void, UInt32> ("UnregisterFromKey", "Form", papyrusForm::UnregisterFromKey, registry));
 
 	registry->RegisterFunction(
-		new NativeFunction1 <TESForm, void, UInt32> ("UnregisterFromMenuOpenClose", "Form", papyrusForm::UnregisterFromMenuOpenClose, registry));
+		new NativeFunction0 <TESForm, void> ("UnregisterFromAllKeys", "Form", papyrusForm::UnregisterFromAllKeys, registry));
 
 	registry->RegisterFunction(
-		new NativeFunction0 <TESForm, void> ("UnregisterFromAllMenuOpenClose", "Form", papyrusForm::UnregisterFromAllMenuOpenClose, registry));
+		new NativeFunction1 <TESForm, void, UInt32> ("RegisterForMenu", "Form", papyrusForm::RegisterForMenu, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction1 <TESForm, void, UInt32> ("UnregisterFromMenu", "Form", papyrusForm::UnregisterFromMenu, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction0 <TESForm, void> ("UnregisterFromAllMenus", "Form", papyrusForm::UnregisterFromAllMenus, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction2 <TESForm, void, BSFixedString, BSFixedString> ("RegisterForModEvent", "Form", papyrusForm::RegisterForModEvent, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction1 <TESForm, void, BSFixedString> ("SendModEvent", "Form", papyrusForm::SendModEvent, registry));
 }

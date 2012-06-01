@@ -476,11 +476,10 @@ extern const _CRC32_Calc4 CRC32_Calc4;
 typedef void (__cdecl * _CRC32_Calc8)(UInt32 * out, UInt64 data);
 extern const _CRC32_Calc8 CRC32_Calc8;
 
-template <typename T> UInt32 GetHash(T* key) { STATIC_ASSERT(false); }
-
-template <> inline UInt32 GetHash<UInt32> (UInt32 * key)				{ UInt32 hash; CRC32_Calc4(&hash, *key); return hash; }
-template <> inline UInt32 GetHash<UInt64> (UInt64 * key)				{ UInt32 hash; CRC32_Calc8(&hash, *key); return hash; }
-template <> inline UInt32 GetHash<BSFixedString> (BSFixedString * key)	{ UInt32 hash; CRC32_Calc4(&hash, (UInt32)key->data); return hash; }
+template <typename T> UInt32 GetHash(T* key);
+template <> UInt32 GetHash<UInt32> (UInt32 * key);
+template <> UInt32 GetHash<UInt64> (UInt64 * key);
+template <> UInt32 GetHash<BSFixedString> (BSFixedString * key);
 
 // 01C
 // How to default/copy-construct in insert/grow still needs some work for items that have an overloaded assignment operator (like STL-types)

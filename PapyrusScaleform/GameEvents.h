@@ -89,12 +89,18 @@ class InputEvent
 public:
 	enum
 {
-		kInput_Button = 0,
-		kInput_MouseMove,
-		kInput_Char,
-		kInput_Thumbstick,
-		kInput_DeviceConnect,
-		kInput_Kinect
+		kEventType_Button = 0,
+		kEventType_MouseMove,
+		kEventType_Char,
+		kEventType_Thumbstick,
+		kEventType_DeviceConnect,
+		kEventType_Kinect
+	};
+
+	enum
+	{
+		kDeviceType_Keyboard = 0,
+		kDeviceType_Mouse
 	};
 
 	virtual			~InputEvent();
@@ -102,26 +108,27 @@ public:
 	virtual UInt32	GetID();
 
 //	void			** _vtbl;	// 00
-	UInt32			unk04;		// 04 - flags?
-	const UInt32	type;		// 08
-	InputEvent *	next;		// 0C
+	const UInt32	deviceType;	// 04
+	const UInt32	eventType;	// 08
+	InputEvent		* next;		// 0C
 };
 STATIC_ASSERT(sizeof(InputEvent) == 0x10);
 
 class IDEvent
 {
 public:
-	UInt32			id;			// 00
+	UInt32			deviceID;			// 00 - device ID?
 };
 
 // 20
 class ButtonEvent : public IDEvent, public InputEvent
 {
 public:
-	UInt32			unk14;		// 14
-	UInt32			unk18;		// 18
-	UInt32			unk1C;		// 1C
+	UInt32			scanCode;	// 14
+	UInt32			modFlags;	// 18 (00000038 when ALT is pressed, 0000001D when STRG is pressed)
+	float			timer;		// 1C (hold duration)
 };
+STATIC_ASSERT(sizeof(ButtonEvent) == 0x20);
 
 class MouseMoveEvent : public IDEvent, public InputEvent
 {
@@ -131,7 +138,7 @@ class MouseMoveEvent : public IDEvent, public InputEvent
 class CharEvent : public InputEvent
 {
 public:
-	UInt32			keyCode;		// 10
+	UInt32			keyCode;		// 10 (ascii-compatible)
 };
 STATIC_ASSERT(sizeof(CharEvent) == 0x14);
 

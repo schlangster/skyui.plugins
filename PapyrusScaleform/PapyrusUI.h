@@ -9,19 +9,18 @@ struct StaticFunctionTag;
 class VMClassRegistry;
 
 
-template <typename T> void SetGFxValue(GFxValue * val, T arg, GFxMovieView * view)							{ STATIC_ASSERT(false); }
-template <> inline void SetGFxValue<bool> (GFxValue * val, bool arg, GFxMovieView * view)					{ val->SetBool(arg); }
-template <> inline void SetGFxValue<float> (GFxValue * val, float arg, GFxMovieView * view)					{ val->SetNumber(arg); }
-template <> inline void SetGFxValue<BSFixedString> (GFxValue * val, BSFixedString arg, GFxMovieView * view)	{ view->CreateString(val, arg.data); }
-
-template <typename T> T GetGFxValue(GFxValue * val)								{ STATIC_ASSERT(false); }
-template <> inline bool GetGFxValue<bool> (GFxValue * val)						{ return (val->GetType() == GFxValue::kType_Bool ? val->GetBool() : false); }
-template <> inline float GetGFxValue<float> (GFxValue * val)					{ return (val->GetType() == GFxValue::kType_Number ? val->GetNumber() : 0); }
-template <> inline BSFixedString GetGFxValue<BSFixedString> (GFxValue * val)	{ return (val->GetType() == GFxValue::kType_String ? val->GetString() : NULL); }
-
-
 namespace papyrusUI
 {
+	template <typename T> void SetGFxValue(GFxValue * val, T arg, GFxMovieView * view);
+	template <> void SetGFxValue<bool> (GFxValue * val, bool arg, GFxMovieView * view);
+	template <> void SetGFxValue<float> (GFxValue * val, float arg, GFxMovieView * view);
+	template <> void SetGFxValue<BSFixedString> (GFxValue * val, BSFixedString arg, GFxMovieView * view);
+
+	template <typename T> T GetGFxValue(GFxValue * val);
+	template <> bool GetGFxValue<bool> (GFxValue * val);
+	template <> float GetGFxValue<float> (GFxValue * val);
+	template <> BSFixedString GetGFxValue<BSFixedString> (GFxValue * val);
+
 	void RegisterFuncs(VMClassRegistry* registry);
 
 	bool CreateObjectRoot(GFxMovieView * view, const char * dest);

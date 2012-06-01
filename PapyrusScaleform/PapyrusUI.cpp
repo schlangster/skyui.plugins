@@ -8,6 +8,14 @@
 
 namespace papyrusUI
 {
+	template <> void SetGFxValue<bool> (GFxValue * val, bool arg, GFxMovieView * view)						{ val->SetBool(arg); }
+	template <> void SetGFxValue<float> (GFxValue * val, float arg, GFxMovieView * view)					{ val->SetNumber(arg); }
+	template <> void SetGFxValue<BSFixedString> (GFxValue * val, BSFixedString arg, GFxMovieView * view)	{ view->CreateString(val, arg.data); }
+
+	template <> bool GetGFxValue<bool> (GFxValue * val)						{ return (val->GetType() == GFxValue::kType_Bool ? val->GetBool() : false); }
+	template <> float GetGFxValue<float> (GFxValue * val)					{ return (val->GetType() == GFxValue::kType_Number ? val->GetNumber() : 0); }
+	template <> BSFixedString GetGFxValue<BSFixedString> (GFxValue * val)	{ return (val->GetType() == GFxValue::kType_String ? val->GetString() : NULL); }
+
 	bool CreateObjectRoot(GFxMovieView * view, const char * dest)
 	{
 		std::string s;
