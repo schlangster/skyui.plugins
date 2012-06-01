@@ -126,7 +126,7 @@ EventResult SKSEEventHandler::ReceiveEvent(MenuOpenCloseEvent * evn, EventDispat
 
 
 EventResult	SKSEEventHandler::ReceiveEvent(InputEvent ** evns, EventDispatcher<InputEvent,InputEvent*> * dispatcher)
-		{
+{
 	// Function is called periodically, if no buttons pressed/held *evns == NULL
 
 	static UInt8	keyState[0x100] = { 0 };
@@ -181,7 +181,7 @@ EventResult	SKSEEventHandler::ReceiveEvent(InputEvent ** evns, EventDispatcher<I
 				CharEvent * t = DYNAMIC_CAST(e, InputEvent, CharEvent);
 				//_MESSAGE("kInput_Char: %c", t->keyCode);
 				break;
-		}
+			}
 			case InputEvent::kEventType_Thumbstick:
 			{
 				ThumbstickEvent * t = DYNAMIC_CAST(e, InputEvent, ThumbstickEvent);
@@ -207,7 +207,7 @@ EventResult	SKSEEventHandler::ReceiveEvent(InputEvent ** evns, EventDispatcher<I
 }
 
 EventResult SKSEEventHandler::ReceiveEvent(SKSEModCallbackEvent * evn, EventDispatcher<SKSEModCallbackEvent> * dispatcher)
-		{
+{
 #if _DEBUG
 	_MESSAGE("Received internal SKSEModCallbackEvent. EventName: %s", evn->eventName);
 #endif

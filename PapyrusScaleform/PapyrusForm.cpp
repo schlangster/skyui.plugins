@@ -160,10 +160,10 @@ namespace papyrusForm
 		// Will only be added once. TODO move this somewhere else.
 		MenuManager * mm = MenuManager::GetSingleton();
 		if (mm)
-		mm->MenuOpenCloseEventDispatcher()->AddEventSink(&g_skseEventHandler);
+			mm->MenuOpenCloseEventDispatcher()->AddEventSink(&g_skseEventHandler);
 		if (*g_inputEventDispatcher)
 			(*g_inputEventDispatcher)->AddEventSink(&g_skseEventHandler);
-
+		
 		g_menuOpenCloseRegs.Register(thisForm, menuName);
 	}
 

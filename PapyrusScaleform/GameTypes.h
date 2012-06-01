@@ -123,7 +123,7 @@ public:
 
 	Array arr;		// 00
 	UInt32 count;	// 08
-	
+
 	tArray() : count(0) {};
 	
 	bool GetNthItem(UInt32 index, T& pT)

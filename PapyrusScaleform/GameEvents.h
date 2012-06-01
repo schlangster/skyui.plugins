@@ -88,7 +88,7 @@ class InputEvent
 {
 public:
 	enum
-{
+	{
 		kEventType_Button = 0,
 		kEventType_MouseMove,
 		kEventType_Char,
