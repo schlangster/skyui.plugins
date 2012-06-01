@@ -29,8 +29,8 @@ template <typename T1>
 class EventQueueFunctor1 : public IFunctionArguments
 {
 public:
-	EventQueueFunctor1(BSFixedString * a_eventName, T1 a_arg1)
-		: eventName(a_eventName), arg1(a_arg1) {}
+	EventQueueFunctor1(BSFixedString & a_eventName, T1 a_arg1)
+		: eventName(a_eventName.data), arg1(a_arg1) {}
 
 	virtual bool	Copy(Output * dst)
 	{
@@ -43,11 +43,11 @@ public:
 	void			operator() (EventRegistration<void*> & reg)
 	{
 		VMClassRegistry * registry = (*g_skyrimVM)->GetClassRegistry();
-		registry->QueueEvent(reg.handle, eventName, this);
+		registry->QueueEvent(reg.handle, &eventName, this);
 	}
 
 private:
-	BSFixedString	* eventName;
+	BSFixedString	eventName;
 	T1				arg1;
 };
 
@@ -55,8 +55,8 @@ template <typename T1, typename T2>
 class EventQueueFunctor2 : public IFunctionArguments
 {
 public:
-	EventQueueFunctor2(BSFixedString * a_eventName, T1 a_arg1, T2 a_arg2)
-		: eventName(a_eventName), arg1(a_arg1), arg2(a_arg2) {}
+	EventQueueFunctor2(BSFixedString & a_eventName, T1 a_arg1, T2 a_arg2)
+		: eventName(a_eventName.data), arg1(a_arg1), arg2(a_arg2) {}
 
 	virtual bool	Copy(Output * dst)
 	{
@@ -70,11 +70,11 @@ public:
 	void			operator() (EventRegistration<void*> & reg)
 	{
 		VMClassRegistry * registry = (*g_skyrimVM)->GetClassRegistry();
-		registry->QueueEvent(reg.handle, eventName, this);
+		registry->QueueEvent(reg.handle, &eventName, this);
 	}
 
 private:
-	BSFixedString	* eventName;
+	BSFixedString	eventName;
 	T1				arg1;
 	T2				arg2;
 };
@@ -114,11 +114,11 @@ EventResult SKSEEventHandler::ReceiveEvent(MenuOpenCloseEvent * evn, EventDispat
 	_MESSAGE("Received internal MenuOpenCloseEvent. Name: %s, Opening: %d", evn->menuName, evn->opening);
 #endif
 
-	BSFixedString	eventName =		evn->opening ? BSFixedString("OnMenuOpen") : BSFixedString("OnMenuClose");
+	BSFixedString eventName = evn->opening ? BSFixedString("OnMenuOpen") : BSFixedString("OnMenuClose");
 
 	g_menuOpenCloseRegs.ForEach(
 		evn->menuName,
-		EventQueueFunctor1<BSFixedString>(&eventName, evn->menuName)
+		EventQueueFunctor1<BSFixedString>(eventName, evn->menuName)
 	);
 
 	return kEvent_Continue;
@@ -136,7 +136,7 @@ EventResult	SKSEEventHandler::ReceiveEvent(InputEvent ** evns, EventDispatcher<I
 		if (keyState[i] && (--keyState[i] == 0))
 			g_inputEventRegs.ForEach(
 				i,
-				EventQueueFunctor2<SInt32, float>(&BSFixedString("OnKeyUp"), (SInt32)i, keyTimer[i])
+				EventQueueFunctor2<SInt32, float>(BSFixedString("OnKeyUp"), (SInt32)i, keyTimer[i])
 			);
 
 	if (! *evns)
@@ -161,7 +161,7 @@ EventResult	SKSEEventHandler::ReceiveEvent(InputEvent ** evns, EventDispatcher<I
 					//_MESSAGE("KeyDown: %c", t->scanCode);
 					g_inputEventRegs.ForEach(
 						t->scanCode,
-						EventQueueFunctor1<SInt32>(&BSFixedString("OnKeyDown"), (SInt32)t->scanCode)
+						EventQueueFunctor1<SInt32>(BSFixedString("OnKeyDown"), (SInt32)t->scanCode)
 					);
 				}
 
