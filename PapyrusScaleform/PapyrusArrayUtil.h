@@ -1,6 +1,4 @@
 #pragma once
-#include "GameTypes.h"
-#include "PapyrusVM.h"
 
 
 struct StaticFunctionTag;

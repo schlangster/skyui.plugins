@@ -106,8 +106,9 @@ public:
 
 		RegMap::iterator handles = m_data.find(key);
 
-		for (RegSet::iterator iter = handles->second.begin(); iter != handles->second.end(); ++iter)
-			functor(*iter);
+		if (handles != m_data.end())
+			for (RegSet::iterator iter = handles->second.begin(); iter != handles->second.end(); ++iter)
+				functor(*iter);
 
 		Release();
 	}
