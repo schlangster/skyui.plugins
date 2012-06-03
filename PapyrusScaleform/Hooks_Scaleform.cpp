@@ -293,16 +293,18 @@ class SKSEScaleform_SendModEvent : public GFxFunctionHandler
 public:
 	virtual void	Invoke(Args* args)
 	{
-		ASSERT(args->numArgs >= 1);
+		ASSERT(args->numArgs >= 2);
 
 		const char	* eventName = args->args[0].GetString();
+		const char	* message = args->args[1].GetString();
 
 #if _DEBUG
-		_MESSAGE("scaleform: send mod event (%s)", eventName);
+		_MESSAGE("scaleform: send mod event (%s, %s)", eventName, message);
 #endif
 
-		BSFixedString arg(eventName);
-		SKSEModCallbackEvent evn(arg);
+		BSFixedString argEventName(eventName);
+		BSFixedString argMessage(message);
+		SKSEModCallbackEvent evn(argEventName, argMessage);
 		g_modCallbackEventDispatcher.SendEvent(&evn);
 	}
 };

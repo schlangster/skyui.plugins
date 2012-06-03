@@ -9,10 +9,8 @@
 RegistrationMapHolder<BSFixedString>						g_menuOpenCloseRegs;
 RegistrationMapHolder<UInt32>								g_inputEventRegs;
 RegistrationMapHolder<BSFixedString,ModCallbackParameters>	g_modCallbackRegs;
-
-EventDispatcher<SKSEModCallbackEvent> g_modCallbackEventDispatcher;
-
-SKSEEventHandler	g_skseEventHandler;
+EventDispatcher<SKSEModCallbackEvent>						g_modCallbackEventDispatcher;
+SKSEEventHandler											g_skseEventHandler;
 
 
 //// Generic functors
@@ -84,13 +82,14 @@ private:
 class ModCallbackEventFunctor : public IFunctionArguments
 {
 public:
-	ModCallbackEventFunctor(BSFixedString & a_eventName)
-		: eventName(a_eventName.data) {}
+	ModCallbackEventFunctor(BSFixedString & a_eventName, BSFixedString & a_message)
+		: eventName(a_eventName.data), message(a_message.data) {}
 
 	virtual bool	Copy(Output * dst)
 	{
-		dst->Resize(1);
+		dst->Resize(2);
 		dst->Get(0)->SetString(eventName.data);
+		dst->Get(1)->SetString(message.data);
 
 		return true;
 	}
@@ -103,6 +102,7 @@ public:
 
 private:
 	BSFixedString	eventName;
+	BSFixedString	message;
 };
 
 
@@ -125,7 +125,7 @@ EventResult SKSEEventHandler::ReceiveEvent(MenuOpenCloseEvent * evn, EventDispat
 }
 
 
-EventResult	SKSEEventHandler::ReceiveEvent(InputEvent ** evns, EventDispatcher<InputEvent,InputEvent*> * dispatcher)
+EventResult SKSEEventHandler::ReceiveEvent(InputEvent ** evns, EventDispatcher<InputEvent,InputEvent*> * dispatcher)
 {
 	// Function is called periodically, if no buttons pressed/held *evns == NULL
 
@@ -209,14 +209,14 @@ EventResult	SKSEEventHandler::ReceiveEvent(InputEvent ** evns, EventDispatcher<I
 EventResult SKSEEventHandler::ReceiveEvent(SKSEModCallbackEvent * evn, EventDispatcher<SKSEModCallbackEvent> * dispatcher)
 {
 #if _DEBUG
-	_MESSAGE("Received internal SKSEModCallbackEvent. EventName: %s", evn->eventName);
+	_MESSAGE("Received internal SKSEModCallbackEvent. EventName: %s. Message: %s", evn->eventName, evn->message);
 #endif
 
 	const char * eventNameData = evn->eventName.data;
 
 	g_modCallbackRegs.ForEach(
 		evn->eventName,
-		ModCallbackEventFunctor(evn->eventName)
+		ModCallbackEventFunctor(evn->eventName, evn->message)
 	);
 
 	return kEvent_Continue;

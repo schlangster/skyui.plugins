@@ -1,8 +1,6 @@
 #pragma once
 
 #include "GameTypes.h"
-#include "GameEvents.h"
-#include "GameMenus.h"
 
 class TESForm;
 class BGSKeyword;
@@ -32,5 +30,5 @@ namespace papyrusForm
 	void RegisterForModEvent(TESForm * thisForm, BSFixedString eventName, BSFixedString callbackName);
 	void UnregisterFromModEvent(TESForm * thisForm, BSFixedString eventName);
 	void UnregisterFromAllModEvents(TESForm * thisForm);
-	void SendModEvent(TESForm * thisForm, BSFixedString eventName);
+	void SendModEvent(TESForm * thisForm, BSFixedString eventName, BSFixedString message);
 }

@@ -2,11 +2,10 @@
 
 #include "GameForms.h"
 #include "GameRTTI.h"
-#include "GameRTTI.h"
 #include "PapyrusVM.h"
 #include "PapyrusEvents.h"
+#include "GameMenus.h"
 
-#include <map>
 
 namespace papyrusForm
 {
@@ -207,12 +206,12 @@ namespace papyrusForm
 		g_modCallbackRegs.UnregisterFromAll(thisForm);
 	}
 
-	void SendModEvent(TESForm * thisForm, BSFixedString eventName)
+	void SendModEvent(TESForm * thisForm, BSFixedString eventName, BSFixedString message)
 	{
 		if (!eventName.data)
 			return;
 
-		SKSEModCallbackEvent evn(eventName);
+		SKSEModCallbackEvent evn(eventName, message);
 		g_modCallbackEventDispatcher.SendEvent(&evn);
 	}
 
@@ -269,7 +268,7 @@ void papyrusForm::RegisterFuncs(VMClassRegistry* registry)
 		new NativeFunction2 <TESForm, void, BSFixedString, BSFixedString> ("RegisterForModEvent", "Form", papyrusForm::RegisterForModEvent, registry));
 
 	registry->RegisterFunction(
-		new NativeFunction1 <TESForm, void, BSFixedString> ("SendModEvent", "Form", papyrusForm::SendModEvent, registry));
+		new NativeFunction2 <TESForm, void, BSFixedString, BSFixedString> ("SendModEvent", "Form", papyrusForm::SendModEvent, registry));
 
 	registry->RegisterFunction(
 		new NativeFunction1 <TESForm, void, BSFixedString> ("UnregisterFromModEvent", "Form", papyrusForm::UnregisterFromModEvent, registry));

@@ -84,30 +84,6 @@ namespace papyrusUI
 		return view->GetVariable(fxDest, dest.c_str());
 	}
 
-	void Invoke(StaticFunctionTag* thisInput, BSFixedString menuName, BSFixedString targetStr)
-	{
-		if (!menuName.data || !targetStr.data)
-			return;
-
-		MenuManager * mm = MenuManager::GetSingleton();
-		if (!mm)
-			return;
-
-		GFxMovieView * view = mm->GetMovieView(&menuName);
-		if (!view)
-			return;
-
-		std::string dest, name;
-		if (! ExtractTargetData(targetStr.data, dest, name))
-			return;
-
-		GFxValue fxDest;
-		if (! view->GetVariable(&fxDest, dest.c_str()))
-			return;
-
-		fxDest.Invoke(name.c_str(), NULL, NULL, 0);
-	}
-
 	bool IsMenuOpen(StaticFunctionTag* thisInput, BSFixedString menuName)
 	{
 		if (!menuName.data)
@@ -145,9 +121,6 @@ void papyrusUI::RegisterFuncs(VMClassRegistry* registry)
 		new NativeFunction2 <StaticFunctionTag, BSFixedString, BSFixedString, BSFixedString> ("GetString", "UI", papyrusUI::GetT<BSFixedString>, registry));
 
 	registry->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, void, BSFixedString, BSFixedString> ("Invoke", "UI", papyrusUI::Invoke, registry));
-
-	registry->RegisterFunction(
 		new NativeFunction3 <StaticFunctionTag, void, BSFixedString, BSFixedString, bool> ("InvokeBool", "UI", papyrusUI::InvokeArgT<bool>, registry));
 
 	registry->RegisterFunction(
@@ -155,6 +128,15 @@ void papyrusUI::RegisterFuncs(VMClassRegistry* registry)
 
 	registry->RegisterFunction(
 		new NativeFunction3 <StaticFunctionTag, void, BSFixedString, BSFixedString, BSFixedString> ("InvokeString", "UI", papyrusUI::InvokeArgT<BSFixedString>, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction3 <StaticFunctionTag, void, BSFixedString, BSFixedString, VMArray<bool>> ("InvokeBoolA", "UI", papyrusUI::InvokeArrayT<bool>, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction3 <StaticFunctionTag, void, BSFixedString, BSFixedString, VMArray<float>> ("InvokeNumberA", "UI", papyrusUI::InvokeArrayT<float>, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction3 <StaticFunctionTag, void, BSFixedString, BSFixedString, VMArray<BSFixedString>> ("InvokeStringA", "UI", papyrusUI::InvokeArrayT<BSFixedString>, registry));
 
 	registry->RegisterFunction(
 		new NativeFunction1 <StaticFunctionTag, bool, BSFixedString> ("IsMenuOpen", "UI", papyrusUI::IsMenuOpen, registry));

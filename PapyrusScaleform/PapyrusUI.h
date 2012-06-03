@@ -1,12 +1,12 @@
 #pragma once
 
-#include "GameTypes.h"
 #include "GameMenus.h"
 #include "ScaleformCallbacks.h"
 #include "ScaleformMovie.h"
 
 struct StaticFunctionTag;
 class VMClassRegistry;
+template <typename T> class VMArray;
 
 
 namespace papyrusUI
@@ -99,6 +99,47 @@ namespace papyrusUI
 		fxDest.Invoke(name.c_str(), NULL, &args, 1);		
 	}
 
-	void Invoke(StaticFunctionTag* thisInput, BSFixedString menuName, BSFixedString targetStr);
+	template <typename T>
+	void InvokeArrayT(StaticFunctionTag* thisInput, BSFixedString menuName, BSFixedString targetStr, VMArray<T> args)
+	{
+		// TODO: Is this ok?
+		GFxValue fxArgsBuf[128];
+
+		if (!menuName.data || !targetStr.data)
+			return;
+
+		MenuManager * mm = MenuManager::GetSingleton();
+		if (!mm)
+			return;
+
+		GFxMovieView * view = mm->GetMovieView(&menuName);
+		if (!view)
+			return;
+
+		std::string dest, name;
+		if (! ExtractTargetData(targetStr.data, dest, name))
+			return;
+
+		GFxValue fxDest;
+		if (! view->GetVariable(&fxDest, dest.c_str()))
+			return;
+
+		UInt32 argCount = args.Length();
+		GFxValue * pArgs = NULL;
+		if (argCount > 0)
+		{
+			pArgs = (GFxValue*) &fxArgsBuf;
+			for (UInt32 i=0; i<argCount; i++, pArgs++)
+			{
+				pArgs->CleanManaged();
+				T arg;
+				args.Get(&arg, i);
+				SetGFxValue<T>(pArgs, arg, view);
+			}
+		}
+		
+		fxDest.Invoke(name.c_str(), NULL, (GFxValue*) &fxArgsBuf, argCount);
+	}
+
 	bool IsMenuOpen(StaticFunctionTag* thisInput, BSFixedString menuName);
 }

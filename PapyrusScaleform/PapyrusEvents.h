@@ -5,20 +5,6 @@
 #include "GameEvents.h"
 #include <map>
 #include <set>
-#include <algorithm>
-
-
-template <typename T>
-class SafeDataHolder
-{
-protected:
-	SimpleLock	m_lock;
-public:
-	T			m_data;
-
-	void	Acquire(void) { lock.Lock(); }
-	void	Release(void) { lock.Release(); }
-};
 
 
 // crashes otherwise
@@ -55,12 +41,12 @@ public:
 		if (params)
 			reg.params = *params;
 		
-		m_lock.Lock();
+		Lock();
 
 		if (m_data[key].insert(reg).second)
 			policy->AddRef(reg.handle);
 
-		m_lock.Release();
+		Release();
 	}
 
 	void Unregister(TESForm * form, K& key)
@@ -71,12 +57,12 @@ public:
 		EventRegistration<D> reg;
 		reg.handle = policy->Create(form->formType, (void *)form);
 
-		m_lock.Lock();
+		Lock();
 
 		if (m_data[key].erase(reg))
 			policy->Release(reg.handle);
 
-		m_lock.Release();
+		Release();
 	}
 
 	void UnregisterFromAll(TESForm * form)
@@ -87,13 +73,13 @@ public:
 		EventRegistration<D> reg;
 		reg.handle = policy->Create(form->formType, (void *)form);
 
-		m_lock.Lock();
+		Lock();
 
 		for (RegMap::iterator iter = m_data.begin(); iter != m_data.end(); ++iter)
 			if (iter->second.erase(reg))
 				policy->Release(reg.handle);
 
-		m_lock.Release();
+		Release();
 	}
 
 	void UnregisterFromAll(UInt64 handle)
@@ -104,35 +90,35 @@ public:
 		EventRegistration<D> reg;
 		reg.handle = handle;
 
-		m_lock.Lock();
+		Lock();
 
 		for (RegMap::iterator iter = m_data.begin(); iter != m_data.end(); ++iter)
 			if (iter->second.erase(reg))
 				policy->Release(handle);
 
-		m_lock.Release();
+		Release();
 	}
 
 	template <typename F>
 	void ForEach(K& key, F& functor)
 	{
-		m_lock.Lock();
+		Lock();
 
 		RegMap::iterator handles = m_data.find(key);
 
-		if (handles != m_data.end())
-			for_each(handles->second.begin(), handles->second.end(), functor);
+		for (RegSet::iterator iter = handles->second.begin(); iter != handles->second.end(); ++iter)
+			functor(*iter);
 
-		m_lock.Release();
+		Release();
 	}
 
 	void Clear(void)
 	{
-		m_lock.Lock();
+		Lock();
 
 		m_data.clear();
 
-		m_lock.Release();
+		Release();
 	}
 };
 
@@ -149,9 +135,10 @@ extern RegistrationMapHolder<BSFixedString,ModCallbackParameters>	g_modCallbackR
 struct SKSEModCallbackEvent
 {
 	BSFixedString	eventName;
+	BSFixedString	message;
 
-	SKSEModCallbackEvent(BSFixedString a_eventName) :
-		eventName(a_eventName.data) {}
+	SKSEModCallbackEvent(BSFixedString a_eventName, BSFixedString a_message) :
+		eventName(a_eventName.data), message(a_message.data) {}
 };
 
 template <>

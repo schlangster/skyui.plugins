@@ -150,6 +150,7 @@ bool Function HasKeywordString(string s)
 	return HasKeyword(k)
 endFunction
 
+
 Function RegisterForKey(int keyCode) native
 Function UnregisterFromKey(int keyCode) native
 Function UnregisterFromAllKeys() native
@@ -159,4 +160,6 @@ Function UnregisterFromMenu(string menuName) native
 Function UnregisterFromAllMenus() native
 
 Function RegisterForModEvent(string eventName, string callbackName) native
-Function SendModEvent(string eventName) native
+Function UnregisterFromModEvent(string eventName) native
+Function UnregisterFromAllModEvents(string eventName) native
+Function SendModEvent(string eventName, string msg) native

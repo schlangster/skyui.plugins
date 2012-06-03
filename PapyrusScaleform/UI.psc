@@ -91,11 +91,15 @@ string	Function GetString(string menuName, string target) global native
 ;		UI.SetNumber("Inventory Menu", "_global.myModName.functionData.func1.width", 600)
 ;		UI.Invoke("Inventory Menu", "_root.Menu_mc.ItemsList.func1")
 ;
-Function Invoke(string menuName, string target) global native
+Function Invoke(string menuName, string target) global
+	InvokeBool(menuName, target, false)
+EndFunction
 
 Function InvokeBool(string menuName, string target, bool arg) global native
-
 Function InvokeNumber(string menuName, string target, float arg) global native
-
 Function InvokeString(string menuName, string target, string arg) global native
+
+Function InvokeBoolA(string menuName, string target, bool[] args) global native
+Function InvokeNumberA(string menuName, string target, float[] args) global native
+Function InvokeStringA(string menuName, string target, string[] args) global native
 

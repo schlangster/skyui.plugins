@@ -816,3 +816,17 @@ STATIC_ASSERT(sizeof(tHashSet<void*,void*>) == 0x1C);
 
 template <typename Key, typename Item>
 typename tHashSet<Key,Item>::_Entry tHashSet<Key,Item>::sentinel = tHashSet<Key,Item>::_Entry();
+
+
+// Don't know if this really is a native type or if sometimes locks are just placed before data structures.
+template <typename T>
+class SafeDataHolder
+{
+protected:
+	SimpleLock	m_lock;
+public:
+	T			m_data;
+
+	void	Lock(void) { m_lock.Lock(); }
+	void	Release(void) { m_lock.Release(); }
+};

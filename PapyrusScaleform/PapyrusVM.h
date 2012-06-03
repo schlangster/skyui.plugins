@@ -221,6 +221,11 @@ public:
 		kType_Bool =		5,
 
 		kType_Unk0B =		0x0B,
+
+		kType_StringArray =	12,
+		kType_IntArray =	13,
+		kType_FloatArray =	14,
+		kType_BoolArray =	15
 	};
 
 	// 14+
