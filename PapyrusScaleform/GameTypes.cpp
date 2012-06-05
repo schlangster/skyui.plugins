@@ -43,8 +43,8 @@ const char * BSString::Get(void)
 	return m_data ? m_data : "";
 }
 
-const _CRC32_Calc4 CRC32_Calc4 = (_CRC32_Calc4)0x00A428C0;
-const _CRC32_Calc8 CRC32_Calc8 = (_CRC32_Calc8)0x00A42920;
+const _CRC32_Calc4 CRC32_Calc4 = (_CRC32_Calc4)0x00A42020;
+const _CRC32_Calc8 CRC32_Calc8 = (_CRC32_Calc8)0x00A42080;
 
 template <> UInt32 GetHash<UInt32> (UInt32 * key)				{ UInt32 hash; CRC32_Calc4(&hash, *key); return hash; }
 template <> UInt32 GetHash<UInt64> (UInt64 * key)				{ UInt32 hash; CRC32_Calc8(&hash, *key); return hash; }

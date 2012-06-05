@@ -353,8 +353,8 @@ public:
 	}
 
 	MEMBER_FN_PREFIX(MenuManager);
-	DEFINE_MEMBER_FN(IsMenuOpen, bool, 0x00A55250, BSFixedString * menuName);
-	//DEFINE_MEMBER_FN(Register, void, 0x00A55660, const char * name, void * ctorFunc);
+	DEFINE_MEMBER_FN(IsMenuOpen, bool, 0x00A549F0, BSFixedString * menuName);
+	//DEFINE_MEMBER_FN(Register, void, 0x00A54E00, const char * name, void * ctorFunc);
 
 	GFxMovieView *		GetMovieView(BSFixedString * menuName);
 	

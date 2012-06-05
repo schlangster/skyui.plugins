@@ -160,8 +160,8 @@ public:
 	VMClassRegistry	* GetClassRegistry(void)	{ return m_classRegistry; }
 
 	MEMBER_FN_PREFIX(SkyrimVM);
-	DEFINE_MEMBER_FN(UnregisterForSleep_Internal, void, 0x008CE390, UInt64 handle);
-	DEFINE_MEMBER_FN(RevertGlobalData_Internal, bool, 0x008CF680);
+	DEFINE_MEMBER_FN(UnregisterForSleep_Internal, void, 0x008CD970, UInt64 handle);
+	DEFINE_MEMBER_FN(RevertGlobalData_Internal, bool, 0x008CEC20);
 
 	void OnFormDelete_Hook(UInt64 handle);
 	void RevertGlobalData_Hook(void);

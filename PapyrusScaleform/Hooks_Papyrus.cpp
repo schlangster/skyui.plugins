@@ -143,7 +143,7 @@ void Hooks_Papyrus_Commit(void)
 	WriteRelCall(0x008D1E3B, (UInt32)RegisterPapyrusFunctions_Hook);
 
 	// Event registration lifecycle
-	WriteRelCall(0x008CFE0A, GetFnAddr(&SkyrimVM::OnFormDelete_Hook));
-	WriteRelCall(0x008D0237, GetFnAddr(&SkyrimVM::RevertGlobalData_Hook)); // Normal game Load
-	WriteRelCall(0x008D06A6, GetFnAddr(&SkyrimVM::RevertGlobalData_Hook)); // New script reload command
+	WriteRelCall(0x008CF3AA, GetFnAddr(&SkyrimVM::OnFormDelete_Hook));
+	WriteRelCall(0x008CF7D7, GetFnAddr(&SkyrimVM::RevertGlobalData_Hook)); // Normal game Load
+	WriteRelCall(0x008CFC46, GetFnAddr(&SkyrimVM::RevertGlobalData_Hook)); // New script reload command
 }
