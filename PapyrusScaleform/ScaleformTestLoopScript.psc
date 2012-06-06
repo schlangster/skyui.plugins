@@ -46,10 +46,10 @@ Event OnKeyUp(int keyCode, float holdTime)
 	SendModEvent("t2")
 EndEvent
 
-Event OnTestEvent(string eventName)
+Event OnTestEvent(string eventName, string msg)
 	AppendMenuText("Received Papyrus event: " + eventName)
 EndEvent
 
-Event OnUIEvent(string eventName)
+Event OnUIEvent(string eventName, string msg)
 	AppendMenuText("Received UI event: " + eventName)
 EndEvent

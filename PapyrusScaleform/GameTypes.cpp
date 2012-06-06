@@ -25,7 +25,7 @@ StringCache * StringCache::GetSingleton(void)
 {
 	typedef StringCache * (* _GetSingleton)(void);
 
-	return ((_GetSingleton)0x00A48EB0)();
+	return ((_GetSingleton)0x00A48640)();
 }
 
 StringCache::Lock * StringCache::GetLock(UInt32 crc16)

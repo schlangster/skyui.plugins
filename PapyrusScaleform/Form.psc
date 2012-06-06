@@ -119,7 +119,7 @@ Event OnUpdateGameTime()
 EndEvent
 
 
-; SKSE additions built 2012-05-27 07:43:18.932000 UTC
+; SKSE additions built 2012-06-06 02:49:46.290000 UTC
 
 ; Returns the typecode for this form object
 Int Function GetType() native
@@ -161,5 +161,5 @@ Function UnregisterFromAllMenus() native
 
 Function RegisterForModEvent(string eventName, string callbackName) native
 Function UnregisterFromModEvent(string eventName) native
-Function UnregisterFromAllModEvents(string eventName) native
-Function SendModEvent(string eventName, string msg) native
+Function UnregisterFromAllModEvents() native
+Function SendModEvent(string eventName, string msg = "") native

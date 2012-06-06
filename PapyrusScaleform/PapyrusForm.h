@@ -1,6 +1,6 @@
 #pragma once
 
-#include "GameTypes.h"
+#include "skse/GameTypes.h"
 
 class TESForm;
 class BGSKeyword;

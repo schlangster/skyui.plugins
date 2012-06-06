@@ -214,7 +214,6 @@ namespace papyrusForm
 		SKSEModCallbackEvent evn(eventName, message);
 		g_modCallbackEventDispatcher.SendEvent(&evn);
 	}
-
 }
 
 #include "PapyrusVM.h"
