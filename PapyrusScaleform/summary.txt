@@ -1,0 +1,124 @@
+### Internal event system ###
+
+Files:
+ api/GameEvents.*
+
+Further decoded some classes of the game-internal event system. The events exposed in Papyrus are a subset of those.
+
+
+Example:
+
+- TESSleepStartEvent encapsulates event data (sleep start time, sleep end time)
+
+- BSTEventSink<TESSleepStartEvent> defines the signature of an event handler for TESSleepStartEvent:
+	ReceiveEvent(TESSleepStartEvent * evn, EventDispatcher<TESSleepStartEvent> * dispatcher)
+
+- Multiple event sinks for TESSleepStartEvent can register at one EventDispatcher<TESSleepStartEvent>.
+  EventDispatcher::SendEvent(TESSleepStartEvent * evn) fowards evn to all registered event sinks.
+
+Currently decoded are events for menu open/close and input events (partially).
+
+
+
+### Papyrus events: General ###
+
+Files:
+ papryus/functions/PapyrusEvents.*
+ papyrus/functions/PapyrusForm.*
+ papyrus/vm/PapyrusVM.* (hooked functions)
+ hooks/Hooks_Papyrus.cpp
+
+New papyrus events use the internal event system. Registrations are stored in STL containers.
+Container access is synchronized with SimpleLock.
+Registrations are cleared on game reload in a RevertGlobalData() hook.
+All registrations of a handle are removed in a OnFormDelete() hook (same place where update registrations etc. are removed).
+Registrations have to be refreshed after each game load.
+A single event handler (SKSEEventHandler) implements all added event sinks.
+Each new event has Papyrus functions for Form.RegisterForX, Form.UnregisterFromX and Form.UnregisterFromALLX
+
+TODO:
+ Find a nice place to register the event sinks. Currently this is just done in the functions that use them, which works too.
+
+
+
+### Papyrus events: MenuOpenClose ###
+
+Files:
+ papyrus/functions/PapyrusForm.*
+
+A custom event sink is added to the existing internal event dispatcher.
+
+
+
+### Papyrus events: InputEvents ###
+
+Files:
+ papyrus/functions/PapyrusForm.*
+
+I've tried this out instead of using the DInput hooks as it fitted in nicely. But it would be easy to use the old UpdateKeys as well.
+I think it would be possible to disable keys by making sure that the SKSE event handler is inserted before any other input event sinks, then
+the passed event data could be modified.
+I only went as far as making this work for keyboard presses with OnKeyDown/OnKeyUp for testing, mouse buttons are not supported yet.
+
+
+
+### Papyrus events: ModCallbackEvents ###
+
+Files:
+ papyrus/functions/PapyrusForm.*
+ hooks/Hooks_Scaleform.cpp
+
+These are completely new events, so they define a custom event dispatcher as well.
+Mods can register callbacks for custom events, i.e. RegisterModEvent("myEvent", "OnCustomEvent")
+They can be triggered from ActionScript with skse.SendModEvent("myEvent, "event message")  [this one is required for UI->Papyrus communcation]
+Custom events can be triggered from Papyrus with SendModEvent("myEvent", "event message")  [just added it because it was possible]
+
+
+
+### Papyrus UI functions ###
+
+Files:
+ papyrus/functions/PapyrusUI.*
+
+Functions to Get/Set String/Number/Bool values in the UI.
+Functions to invoke AS functions, either with a single argument (InvokeT), or with multiple arguments passed in an array (InvokeTA).
+The invoke array functions require support for array arguments.
+
+
+
+### Papyrus Array arguments ###
+
+Files:
+ papyrus/vm/PapyrusArgs.*
+ papyrus/vm/PapyrusNativeFunctionDef_Base.inl
+ papyrus/functions/ArrayUtil.*
+
+Array parameters are specifified as VMArray<T>. VMArray was not based on a native type, it's just holds the pointer to the ArrayData.
+It provides functions to get an element at a position and to get the length. So these are basically just read-only, and returning arrays in a function
+is not supported yet. But for the things I needed to do (quickly pass lots of strings from Papyrus->AS), it was enough.
+
+The reason I removed the *registry parameter from all the UnpackValue<T> functions is that it was not used by anything so far, and VMArray::Get
+executes a delayed UnpackValue. So I would've had to save the pointer to the registry in the VMArray as well and it would no longer fit in 4 bytes.
+
+ArrayUtil adds GetIndexOfT(array, arg) Papyrus functions.
+
+
+
+### Check for calling non-static functions on invalid refs ###
+
+Files:
+ papyrus/vm/PapyrusNativeFunctionDef_Base.inl
+
+This should resolve the crash I reported when calling the new SKSE functions on inventory objects (tested with RegisterForKey in an OnEquip event).
+
+I have not tested if this might break any other functions, I only tested the ones I used for the UI so far. But these were both static and non-static.
+
+
+
+### tHashSet ###
+
+Files:
+ api/GameTypes.*
+
+This is the hash table used in the menu manager to store the GFxMovieViews for each menu.
+Instead of calling several native functions, MenuManager::GetMovieView now uses tHashSet::Lookup (which is what the native functions do as well).
