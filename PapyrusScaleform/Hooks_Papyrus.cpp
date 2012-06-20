@@ -11,7 +11,6 @@
 #include "PapyrusActorBase.h"
 #include "PapyrusAlias.h"
 #include "PapyrusArmor.h"
-#include "PapyrusArrayUtil.h"
 #include "PapyrusBook.h"
 #include "PapyrusCell.h"
 #include "PapyrusColorForm.h"
@@ -132,9 +131,6 @@ void RegisterPapyrusFunctions_Hook(VMClassRegistry ** registryPtr)
 
 	// Quest
 	papyrusQuest::RegisterFuncs(registry);
-
-	// ArrayUtil
-	papyrusArrayUtil::RegisterFuncs(registry);
 }
 
 void Hooks_Papyrus_Init(void)

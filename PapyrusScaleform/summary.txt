@@ -91,7 +91,6 @@ The invoke array functions require support for array arguments.
 Files:
  papyrus/vm/PapyrusArgs.*
  papyrus/vm/PapyrusNativeFunctionDef_Base.inl
- papyrus/functions/ArrayUtil.*
 
 Array parameters are specifified as VMArray<T>. VMArray was not based on a native type, it's just holds the pointer to the ArrayData.
 It provides functions to get an element at a position and to get the length. So these are basically just read-only, and returning arrays in a function
@@ -99,8 +98,6 @@ is not supported yet. But for the things I needed to do (quickly pass lots of st
 
 The reason I removed the *registry parameter from all the UnpackValue<T> functions is that it was not used by anything so far, and VMArray::Get
 executes a delayed UnpackValue. So I would've had to save the pointer to the registry in the VMArray as well and it would no longer fit in 4 bytes.
-
-ArrayUtil adds GetIndexOfT(array, arg) Papyrus functions.
 
 
 

@@ -116,7 +116,7 @@ public:
 	virtual void	Unk_1F(void);
 	virtual void	Unk_20(void);
 	virtual void	Unk_21(void);
-	virtual void	QueueEvent(UInt64 handle, StringCache::Ref * eventName, IFunctionArguments * args);
+	virtual void	QueueEvent(UInt64 handle, const StringCache::Ref * eventName, IFunctionArguments * args);
 	virtual void	Unk_23(void);
 	virtual void	Unk_24(void);
 	virtual void	Unk_25(void);

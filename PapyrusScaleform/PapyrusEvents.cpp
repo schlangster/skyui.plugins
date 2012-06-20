@@ -38,7 +38,7 @@ public:
 		return true;
 	}
 
-	void			operator() (EventRegistration<void*> & reg)
+	void			operator() (const EventRegistration<void*> & reg)
 	{
 		VMClassRegistry * registry = (*g_skyrimVM)->GetClassRegistry();
 		registry->QueueEvent(reg.handle, &eventName, this);
@@ -65,7 +65,7 @@ public:
 		return true;
 	}
 
-	void			operator() (EventRegistration<void*> & reg)
+	void			operator() (const EventRegistration<void*> & reg)
 	{
 		VMClassRegistry * registry = (*g_skyrimVM)->GetClassRegistry();
 		registry->QueueEvent(reg.handle, &eventName, this);
@@ -94,7 +94,7 @@ public:
 		return true;
 	}
 
-	void			operator() (EventRegistration<ModCallbackParameters> & reg)
+	void			operator() (const EventRegistration<ModCallbackParameters> & reg)
 	{
 		VMClassRegistry * registry = (*g_skyrimVM)->GetClassRegistry();
 		registry->QueueEvent(reg.handle, &reg.params.callbackName, this);

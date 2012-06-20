@@ -234,14 +234,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\PapyrusArrayUtil.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\PapyrusArrayUtil.h"
-					>
-				</File>
-				<File
 					RelativePath=".\PapyrusBook.cpp"
 					>
 				</File>
