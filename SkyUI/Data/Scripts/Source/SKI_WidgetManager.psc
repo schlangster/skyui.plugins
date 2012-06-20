@@ -12,16 +12,6 @@ int					_widgetCount
 
 ; FUNCTIONS -------------------------
 
-function Setup()
-	Debug.Trace("SKI_WidgetManager: Setup()")
-	RegisterForModEvent("widgetLoaded", "OnWidgetLoaded")
-	
-	CleanUp()
-	
-	; Load already registered widgets
-	UI.InvokeStringA(_hudMenu, "_global.WidgetLoader.loadWidgets", _widgetTypes);
-endFunction
-
 function CleanUp()
 	Debug.Trace("SKI_WidgetManager: CleanUp()")
 	string[] args = new string[2]
@@ -88,7 +78,17 @@ event OnInit()
 	_curWidgetID	= 0
 	_widgetCount	= 0
 	
-	Setup()
+	OnGameReload()
+endEvent
+
+event OnGameReload()
+	Debug.Trace("SKI_WidgetManager: OnGameReload()")
+	RegisterForModEvent("widgetLoaded", "OnWidgetLoaded")
+	
+	CleanUp()
+	
+	; Load already registered widgets
+	UI.InvokeStringA(_hudMenu, "_global.WidgetLoader.loadWidgets", _widgetTypes);
 endEvent
 
 event OnWidgetLoaded(string a_eventName, String a_msg)
