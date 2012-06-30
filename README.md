@@ -20,17 +20,17 @@ Permission instructions
 -----------------------
 If you want to release a mod that includes or is based on content from this or related repositories, the following rules do apply:
 
-### Unofficial UI SDK sources (https://github.com/*/skyrimui)
+### Unofficial UI SDK sources (*/skyrimui)
 You may use the decompiled/reconstructed vanilla source files in your mod without explicit permission.
 You must give us, the SkyUI team, credit when doing so. While we are not the original authors of this code, decompiling and fixing it up again took a lot of work that deserves mentioning.
 
-### SkyUI sources (https://github.com/*/skyui):
+### SkyUI sources (*/skyui):
 You may not use non-trivial parts of SkyUI in your mod unless given explicit permission. When in doubt over the nature of a trivial part, contact us.
 Permission will likely be granted, if you made changes that are significant enough for your name to be on top of the result instead of ours.
 Permission will likely be refused, if you just made a minor/superficial change, or if you are just reuploading our mod without any further contribution.
 We do want others to extend and learn from our work, but we do not want them to just copy and rebrand it.
 
-### SkyUI plugin sources (https://github.com/*/skyui.plugins):
+### SkyUI plugin sources (*/skyui.plugins):
 The SKSE permission instructions apply.
 
 
